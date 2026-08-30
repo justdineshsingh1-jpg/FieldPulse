@@ -1,4 +1,4 @@
-﻿name: Build Native Android APK
+name: Build Native Android APK
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup Java 17 (JDK)
         uses: actions/setup-java@v4
@@ -25,10 +25,10 @@ jobs:
           java-version: '17'
 
       - name: Install Dependencies
-        run: npm ci || npm install
+        run: npm install
 
       - name: Sync Capacitor Android
-        run: npx cap sync android
+        run: npx @capacitor/cli sync android
 
       - name: Grant Execute Permission for Gradlew
         run: chmod +x android/gradlew
