@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -13,7 +13,8 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     
@@ -23,6 +24,12 @@
       position: relative; z-index: 10;
     }
     .agent-circle-pin img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .start-circle-pin {
+      width: 28px; height: 28px; border-radius: 50%; background: #10b981;
+      color: #ffffff; font-weight: 900; font-size: 11px; display: flex;
+      align-items: center; justify-content: center; border: 2px solid #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
     .radar-pulse-ring {
       position: absolute; width: 44px; height: 44px; border-radius: 50%;
       background: rgba(16, 185, 129, 0.35); border: 2px solid #10b981;
@@ -45,7 +52,7 @@
           <h1 class="font-black text-sm text-white tracking-tight">InnBuilt Industrial</h1>
           <span class="text-[10px] bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-mono font-bold">ADMIN COMMAND CENTER</span>
         </div>
-        <p class="text-[11px] text-slate-400">Master Multi-Agent Fleet Telematics & Live Road Tracking</p>
+        <p class="text-[11px] text-slate-400">Master Fleet Telematics, Historical Calendar & Timeline Replay</p>
       </div>
     </div>
 
@@ -55,69 +62,101 @@
       </a>
       <button onclick="exportMasterFleetReport()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow flex items-center space-x-1.5 transition">
         <i data-lucide="download" class="w-4 h-4"></i>
-        <span>Export Fleet Log</span>
+        <span>Export Log</span>
       </button>
     </div>
   </header>
 
   <!-- Main Admin Dashboard -->
-  <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-4">
+  <main class="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto space-y-4">
     
-    <!-- Top KPI Metrics Banner -->
+    <!-- 1. CALENDAR DATE & AGENT SELECTOR CONTROL BAR -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-xl flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Calendar & Quick Date Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center space-x-1.5 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5">
+          <i data-lucide="calendar" class="w-4 h-4 text-blue-400"></i>
+          <input type="date" id="calendarInput" value="2026-08-30" onchange="onDateChanged(this.value)" class="bg-transparent text-xs text-white font-bold focus:outline-none cursor-pointer">
+        </div>
+
+        <div class="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          <button onclick="selectQuickDate('2026-08-30')" id="btnDateToday" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold transition">Today (30 Aug)</button>
+          <button onclick="selectQuickDate('2026-08-29')" id="btnDateYest" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition">Yesterday (29 Aug)</button>
+          <button onclick="selectQuickDate('2026-08-28')" id="btnDatePrev" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition">28 Aug</button>
+        </div>
+      </div>
+
+      <!-- Agent / Fleet Selector Dropdown -->
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-slate-400 font-medium">Viewing:</span>
+        <select id="agentFilterSelect" onchange="onAgentFilterChanged(this.value)" class="bg-slate-950 border border-slate-700 text-xs text-white font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer">
+          <option value="ALL">🌐 All Fleet Agents (Combined Overview)</option>
+          <option value="unit-01">👤 Dinesh Kumar Singh</option>
+          <option value="unit-02">👤 Rakesh Barua</option>
+          <option value="unit-03">👤 Amit Bora</option>
+          <option value="unit-04">👤 Rahul Das</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- 2. TOP KPI METRICS BANNER -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
         <div>
-          <p class="text-xs text-slate-400 font-medium">Active Units in Field</p>
-          <h3 class="text-2xl font-black text-white mt-0.5" id="kpiUnits">4 Online</h3>
+          <p class="text-xs text-slate-400 font-medium">Active Units on Date</p>
+          <h3 class="text-xl font-black text-white mt-0.5" id="kpiUnits">4 Online</h3>
         </div>
-        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">🟢</div>
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-base">🟢</div>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
         <div>
-          <p class="text-xs text-slate-400 font-medium">Fleet Road Distance</p>
-          <h3 class="text-2xl font-black text-white mt-0.5 font-mono">44.0 km</h3>
+          <p class="text-xs text-slate-400 font-medium">Total Road Distance</p>
+          <h3 class="text-xl font-black text-white mt-0.5 font-mono" id="kpiDistance">44.0 km</h3>
         </div>
-        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg">🚗</div>
+        <div class="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-base">🚗</div>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
         <div>
           <p class="text-xs text-slate-400 font-medium">Avg Battery Health</p>
-          <h3 class="text-2xl font-black text-emerald-400 mt-0.5 font-mono">⚡ 72%</h3>
+          <h3 class="text-xl font-black text-emerald-400 mt-0.5 font-mono" id="kpiBattery">⚡ 72%</h3>
         </div>
-        <div class="w-10 h-10 rounded-xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center font-bold text-lg">🔋</div>
+        <div class="w-9 h-9 rounded-xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center font-bold text-base">🔋</div>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
         <div>
-          <p class="text-xs text-slate-400 font-medium">Total Milestones (~3km)</p>
-          <h3 class="text-2xl font-black text-white mt-0.5 font-mono">18 Logged</h3>
+          <p class="text-xs text-slate-400 font-medium">Milestones Logged (~3km)</p>
+          <h3 class="text-xl font-black text-white mt-0.5 font-mono" id="kpiMilestones">18 Checkpoints</h3>
         </div>
-        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">📍</div>
+        <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-base">📍</div>
       </div>
     </div>
 
-    <!-- Master Fleet Split Screen Layout -->
+    <!-- 3. MASTER FLEET MAP & TIMELINE WORKSPACE -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       
-      <!-- Master Multi-Agent Fleet GIS Map -->
-      <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[600px]">
+      <!-- Master Map Container (2 Columns) -->
+      <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[620px]">
         <!-- Map Header Toolbar -->
-        <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+        <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
           <div class="flex items-center space-x-2.5">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-halo"></span>
-            <h3 class="font-extrabold text-sm text-white">Live Multi-Agent Fleet Map (Google GIS)</h3>
+            <h3 class="font-extrabold text-sm text-white" id="mapTitle">Fleet Traversal Map</h3>
+            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono" id="mapDateBadge">30 Aug 2026</span>
           </div>
 
           <div class="flex items-center space-x-2">
             <!-- Google Streets & Google Hybrid Switcher -->
-            <div class="bg-slate-800 rounded-lg p-1 flex space-x-1 text-xs font-bold border border-slate-700">
+            <div class="bg-slate-800 rounded-lg p-0.5 flex space-x-1 text-xs font-bold border border-slate-700">
               <button onclick="setMapTile('googleStreets')" id="btnStreets" class="px-2.5 py-1 rounded bg-blue-600 text-white font-bold">🚗 Streets</button>
               <button onclick="setMapTile('googleHybrid')" id="btnHybrid" class="px-2.5 py-1 rounded text-slate-400 hover:text-white font-bold">🛰️ Hybrid</button>
             </div>
             
-            <button onclick="refreshFleetMap()" title="Refresh Live GPS" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs border border-slate-700">
+            <button onclick="refreshFleetMap()" title="Reset Zoom" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs border border-slate-700">
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
             </button>
           </div>
@@ -128,44 +167,71 @@
           <div id="masterMap" class="w-full h-full"></div>
           
           <!-- Map Legend Overlay -->
-          <div class="absolute bottom-4 left-4 z-[400] bg-slate-900/90 backdrop-blur border border-slate-700 p-3 rounded-xl text-xs space-y-1.5 text-slate-300 shadow-xl">
+          <div class="absolute bottom-4 left-4 z-[400] bg-slate-900/90 backdrop-blur border border-slate-700 p-2.5 rounded-xl text-xs space-y-1 text-slate-300 shadow-xl">
             <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-emerald-500 border border-white"></span>
-              <span>Online Unit (Live Photo Pin)</span>
+              <span class="w-5 h-5 rounded-full bg-[#10b981] text-white font-black text-[10px] flex items-center justify-center">S</span>
+              <span>Starting Point (S)</span>
             </div>
             <div class="flex items-center space-x-2">
               <span class="w-4 h-1 bg-[#10b981] rounded-full"></span>
               <span>Road Traversal Polyline</span>
             </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 border border-white"></span>
+              <span>Agent Position Pin</span>
+            </div>
           </div>
         </div>
+
+        <!-- 4. INTERACTIVE TIMELINE SCRUBBER & PLAYBACK CONTROLS -->
+        <div class="bg-slate-950 border-t border-slate-800 p-3 flex flex-col space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-2">
+              <button onclick="togglePlayback()" id="btnPlay" class="w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center font-bold shadow">
+                <i data-lucide="play" id="iconPlay" class="w-3.5 h-3.5"></i>
+              </button>
+              <span class="text-slate-300 font-bold" id="playbackTimeLabel">Timeline: 09:00 AM</span>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <span class="text-[11px] text-slate-400">Speed:</span>
+              <button onclick="setPlaybackSpeed(1)" id="spd1" class="px-1.5 py-0.5 rounded bg-blue-600 text-[10px] font-bold text-white">1x</button>
+              <button onclick="setPlaybackSpeed(2)" id="spd2" class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400 hover:text-white">2x</button>
+              <button onclick="setPlaybackSpeed(5)" id="spd5" class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400 hover:text-white">5x</button>
+            </div>
+          </div>
+
+          <!-- Timeline Slider -->
+          <input type="range" id="timelineSlider" min="0" max="100" value="100" oninput="onTimelineSliderChange(this.value)" class="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg">
+        </div>
+
       </div>
 
-      <!-- Live Workforce Telematics Roster -->
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[600px]">
+      <!-- Live Workforce & Timeline Milestones (1 Column) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[620px]">
         <!-- Roster Header & Search -->
-        <div class="p-4 border-b border-slate-800 space-y-2.5 bg-slate-900/90">
+        <div class="p-3.5 border-b border-slate-800 space-y-2 bg-slate-900/90">
           <div class="flex items-center justify-between">
-            <h3 class="font-extrabold text-sm text-white">Workforce Telematics Roster</h3>
-            <span class="text-xs text-blue-400 font-bold" id="rosterCount">4 Active Agents</span>
+            <h3 class="font-extrabold text-sm text-white" id="sidebarTitle">Agent Milestones & Roster</h3>
+            <span class="text-xs text-blue-400 font-bold" id="rosterCount">4 Agents</span>
           </div>
 
           <div class="relative">
-            <input type="text" id="searchInput" oninput="filterRoster(this.value)" placeholder="Search agent name, email or site..." class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 pl-8 focus:outline-none focus:border-blue-600">
+            <input type="text" id="searchInput" oninput="filterRoster(this.value)" placeholder="Search agent, site or milestone..." class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 pl-8 focus:outline-none focus:border-blue-600">
             <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
           </div>
         </div>
 
-        <!-- Scrollable Agent Cards List -->
+        <!-- Scrollable Agent Cards / Timeline Sequence -->
         <div id="rosterContainer" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2.5">
           <!-- Populated dynamically via JS -->
         </div>
 
-        <!-- Roster Footer Actions -->
+        <!-- Footer Actions -->
         <div class="p-3 bg-slate-950 border-t border-slate-800">
-          <button onclick="exportMasterFleetReport()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-blue-600/30 transition">
+          <button onclick="exportMasterFleetReport()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-blue-600/30 transition">
             <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-            <span>Export Master Daily Fleet Report</span>
+            <span>Export Day's Telematics Report</span>
           </button>
         </div>
 
@@ -176,87 +242,154 @@
   </main>
 
   <script>
-    const fleetUnits = [
-      {
-        id: "unit-01",
-        name: "Dinesh Kumar Singh (You)",
-        email: "dinesh.singh@dhanpurna.net",
-        photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-        battery: 50,
-        isCharging: false,
-        status: "Moving",
-        speedKmh: 5.6,
-        distanceKm: 8.4,
-        duration: "04:30:00",
-        lastLocation: "Active Road Transit (Riverfront)",
-        lat: 26.1885,
-        lng: 91.7440,
-        breadcrumbs: [
-          { lat: 26.1852, lng: 91.7380 },
-          { lat: 26.1865, lng: 91.7405 },
-          { lat: 26.1880, lng: 91.7428 },
-          { lat: 26.1885, lng: 91.7440 }
-        ]
-      },
-      {
-        id: "unit-02",
-        name: "Rakesh Barua",
-        email: "rakesh.barua@pwdassam.gov.in",
-        photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-        battery: 88,
-        isCharging: true,
-        status: "Moving",
-        speedKmh: 6.2,
-        distanceKm: 14.2,
-        duration: "05:10:00",
-        lastLocation: "Bridge Pier Foundation P-4 (~3km Milestone)",
-        lat: 26.1920,
-        lng: 91.7180,
-        breadcrumbs: [
-          { lat: 26.1880, lng: 91.7120 },
-          { lat: 26.1900, lng: 91.7150 },
-          { lat: 26.1920, lng: 91.7180 }
-        ]
-      },
-      {
-        id: "unit-03",
-        name: "Amit Bora",
-        email: "amit.bora@pwdassam.gov.in",
-        photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-        battery: 32,
-        isCharging: false,
-        status: "Stationary",
-        speedKmh: 0.0,
-        distanceKm: 9.8,
-        duration: "03:45:00",
-        lastLocation: "Material Testing Lab (Idle on Site)",
-        lat: 26.1820,
-        lng: 91.7510,
-        breadcrumbs: [
-          { lat: 26.1790, lng: 91.7450 },
-          { lat: 26.1820, lng: 91.7510 }
-        ]
-      },
-      {
-        id: "unit-04",
-        name: "Rahul Das",
-        email: "rahul.das@pwdassam.gov.in",
-        photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-        battery: 18,
-        isCharging: false,
-        status: "Moving",
-        speedKmh: 4.8,
-        distanceKm: 11.6,
-        duration: "04:15:00",
-        lastLocation: "Fancy Bazar Market Trenching (~3km)",
-        lat: 26.1840,
-        lng: 91.7350,
-        breadcrumbs: [
-          { lat: 26.1800, lng: 91.7280 },
-          { lat: 26.1840, lng: 91.7350 }
-        ]
-      }
-    ];
+    // =========================================================================
+    // MULTI-DAY FLEET DATABASE (Today, Yesterday & Historical)
+    // =========================================================================
+    const multiDayFleetDatabase = {
+      "2026-08-30": [
+        {
+          id: "unit-01",
+          name: "Dinesh Kumar Singh",
+          email: "dinesh.singh@dhanpurna.net",
+          photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          battery: 50,
+          status: "Moving",
+          speedKmh: 5.6,
+          distanceKm: 8.4,
+          duration: "04:30:00",
+          lastLocation: "Active Road Transit (Riverfront)",
+          lat: 26.1885, lng: 91.7440,
+          timeline: [
+            { time: "09:00 AM", label: "Starting Point (Panbazar Gate)", lat: 26.1852, lng: 91.7380, km: 0.0 },
+            { time: "10:15 AM", label: "Riverfront Inspection Site A", lat: 26.1865, lng: 91.7405, km: 2.8 },
+            { time: "12:00 PM", label: "Brahmaputra Heritage Jetty (~3km)", lat: 26.1880, lng: 91.7428, km: 5.6 },
+            { time: "02:30 PM", label: "Current Point: Riverfront Sector 2", lat: 26.1885, lng: 91.7440, km: 8.4 }
+          ]
+        },
+        {
+          id: "unit-02",
+          name: "Rakesh Barua",
+          email: "rakesh.barua@pwdassam.gov.in",
+          photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+          battery: 88,
+          status: "Moving",
+          speedKmh: 6.2,
+          distanceKm: 14.2,
+          duration: "05:10:00",
+          lastLocation: "Bridge Pier Foundation P-4 (~3km Milestone)",
+          lat: 26.1920, lng: 91.7180,
+          timeline: [
+            { time: "08:30 AM", label: "PWD Circle Office (Start)", lat: 26.1880, lng: 91.7120, km: 0.0 },
+            { time: "10:00 AM", label: "West Flyover Column P-1 (~3km)", lat: 26.1900, lng: 91.7150, km: 3.2 },
+            { time: "11:45 AM", label: "Saraighat Approach Junction (~3km)", lat: 26.1910, lng: 91.7165, km: 7.4 },
+            { time: "01:30 PM", label: "Bridge Pier Foundation P-4", lat: 26.1920, lng: 91.7180, km: 14.2 }
+          ]
+        },
+        {
+          id: "unit-03",
+          name: "Amit Bora",
+          email: "amit.bora@pwdassam.gov.in",
+          photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+          battery: 32,
+          status: "Stationary",
+          speedKmh: 0.0,
+          distanceKm: 9.8,
+          duration: "03:45:00",
+          lastLocation: "Material Testing Lab (Idle on Site)",
+          lat: 26.1820, lng: 91.7510,
+          timeline: [
+            { time: "09:15 AM", label: "Central Testing Lab Start", lat: 26.1790, lng: 91.7450, km: 0.0 },
+            { time: "11:00 AM", label: "Aggregate Batching Yard (~3km)", lat: 26.1805, lng: 91.7480, km: 3.5 },
+            { time: "01:15 PM", label: "Material Testing Lab Yard", lat: 26.1820, lng: 91.7510, km: 9.8 }
+          ]
+        },
+        {
+          id: "unit-04",
+          name: "Rahul Das",
+          email: "rahul.das@pwdassam.gov.in",
+          photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+          battery: 18,
+          status: "Moving",
+          speedKmh: 4.8,
+          distanceKm: 11.6,
+          duration: "04:15:00",
+          lastLocation: "Fancy Bazar Market Trenching (~3km)",
+          lat: 26.1840, lng: 91.7350,
+          timeline: [
+            { time: "08:45 AM", label: "Fancy Bazar Entry Hub (Start)", lat: 26.1800, lng: 91.7280, km: 0.0 },
+            { time: "10:30 AM", label: "Drainage Pipeline Sector 1 (~3km)", lat: 26.1820, lng: 91.7310, km: 3.0 },
+            { time: "01:00 PM", label: "Market Trenching Checkpoint (~3km)", lat: 26.1840, lng: 91.7350, km: 11.6 }
+          ]
+        }
+      ],
+      "2026-08-29": [
+        {
+          id: "unit-01",
+          name: "Dinesh Kumar Singh",
+          email: "dinesh.singh@dhanpurna.net",
+          photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          battery: 64,
+          status: "Stationary",
+          speedKmh: 0.0,
+          distanceKm: 12.8,
+          duration: "06:15:00",
+          lastLocation: "Dispur Capital Complex Sector 3",
+          lat: 26.1435, lng: 91.7890,
+          timeline: [
+            { time: "08:30 AM", label: "Guwahati Club Start Point (S)", lat: 26.1840, lng: 91.7610, km: 0.0 },
+            { time: "10:15 AM", label: "GS Road Corridor Inspection (~3.2 km)", lat: 26.1680, lng: 91.7720, km: 3.2 },
+            { time: "01:00 PM", label: "Six Mile Overpass Checkpoint (~6.5 km)", lat: 26.1550, lng: 91.7810, km: 6.5 },
+            { time: "03:45 PM", label: "Dispur Capital Complex Sector 3 (End)", lat: 26.1435, lng: 91.7890, km: 12.8 }
+          ]
+        },
+        {
+          id: "unit-02",
+          name: "Rakesh Barua",
+          email: "rakesh.barua@pwdassam.gov.in",
+          photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+          battery: 75,
+          status: "Stationary",
+          speedKmh: 0.0,
+          distanceKm: 16.5,
+          duration: "07:00:00",
+          lastLocation: "North Guwahati River Crossing",
+          lat: 26.2050, lng: 91.7050,
+          timeline: [
+            { time: "08:00 AM", label: "Jalukbari Circle (Start)", lat: 26.1480, lng: 91.6620, km: 0.0 },
+            { time: "10:30 AM", label: "Amingaon Industrial Hub (~3km)", lat: 26.1820, lng: 91.6850, km: 5.4 },
+            { time: "02:15 PM", label: "North Guwahati River Crossing (End)", lat: 26.2050, lng: 91.7050, km: 16.5 }
+          ]
+        }
+      ],
+      "2026-08-28": [
+        {
+          id: "unit-01",
+          name: "Dinesh Kumar Singh",
+          email: "dinesh.singh@dhanpurna.net",
+          photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          battery: 82,
+          status: "Stationary",
+          speedKmh: 0.0,
+          distanceKm: 15.4,
+          duration: "05:40:00",
+          lastLocation: "Airport Bypass Extension Hub",
+          lat: 26.1150, lng: 91.5950,
+          timeline: [
+            { time: "09:00 AM", label: "Khanapara Junction (Start)", lat: 26.1280, lng: 91.8150, km: 0.0 },
+            { time: "11:30 AM", label: "Lokhra Ring Road Milestone (~3km)", lat: 26.1200, lng: 91.7450, km: 7.2 },
+            { time: "02:45 PM", label: "Airport Bypass Extension Hub (End)", lat: 26.1150, lng: 91.5950, km: 15.4 }
+          ]
+        }
+      ]
+    };
+
+    // Active State
+    let selectedDate = "2026-08-30";
+    let selectedAgentId = "ALL";
+    let isPlaying = false;
+    let playbackInterval = null;
+    let playbackSpeed = 1;
+    let playbackProgress = 100;
 
     let map = null;
     let tileLayer = null;
@@ -265,18 +398,14 @@
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       initMap();
-      renderRoster(fleetUnits);
+      renderDashboard();
     });
 
     function initMap() {
-      map = L.map('masterMap', { zoomControl: true }).setView([26.1875, 91.7380], 14);
+      map = L.map('masterMap', { zoomControl: true }).setView([26.1875, 91.7380], 13);
       tileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-        attribution: '&copy; Google Maps'
+        maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
       }).addTo(map);
-
-      renderMarkers();
     }
 
     function setMapTile(type) {
@@ -297,20 +426,109 @@
       }
     }
 
-    function renderMarkers() {
+    // =========================================================================
+    // CALENDAR & AGENT FILTER HANDLING
+    // =========================================================================
+    function onDateChanged(dateStr) {
+      selectedDate = dateStr;
+      updateDateButtonStyles();
+      renderDashboard();
+    }
+
+    function selectQuickDate(dateStr) {
+      selectedDate = dateStr;
+      document.getElementById('calendarInput').value = dateStr;
+      updateDateButtonStyles();
+      renderDashboard();
+    }
+
+    function updateDateButtonStyles() {
+      const bToday = document.getElementById('btnDateToday');
+      const bYest = document.getElementById('btnDateYest');
+      const bPrev = document.getElementById('btnDatePrev');
+
+      bToday.className = selectedDate === '2026-08-30' ? 'px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold' : 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium';
+      bYest.className = selectedDate === '2026-08-29' ? 'px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold' : 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium';
+      bPrev.className = selectedDate === '2026-08-28' ? 'px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold' : 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium';
+      document.getElementById('mapDateBadge').innerText = selectedDate;
+    }
+
+    function onAgentFilterChanged(agentId) {
+      selectedAgentId = agentId;
+      renderDashboard();
+    }
+
+    // =========================================================================
+    // CORE RENDER DASHBOARD
+    // =========================================================================
+    function renderDashboard() {
+      const unitsForDate = multiDayFleetDatabase[selectedDate] || [];
+      const visibleUnits = selectedAgentId === 'ALL' 
+        ? unitsForDate 
+        : unitsForDate.filter(u => u.id === selectedAgentId);
+
+      // 1. Update KPI Metrics
+      let totalDist = 0;
+      let totalMilestones = 0;
+      let batterySum = 0;
+      visibleUnits.forEach(u => {
+        totalDist += u.distanceKm;
+        totalMilestones += (u.timeline ? u.timeline.length : 0);
+        batterySum += u.battery;
+      });
+
+      document.getElementById('kpiUnits').innerText = `${visibleUnits.length} Units`;
+      document.getElementById('kpiDistance').innerText = `${totalDist.toFixed(1)} km`;
+      document.getElementById('kpiBattery').innerText = visibleUnits.length ? `⚡ ${Math.round(batterySum / visibleUnits.length)}%` : `N/A`;
+      document.getElementById('kpiMilestones').innerText = `${totalMilestones} Logged`;
+
+      // 2. Render Map Layers
+      renderMapForUnits(visibleUnits);
+
+      // 3. Render Sidebar (Roster or Timeline Sequence)
+      renderSidebar(visibleUnits);
+      lucide.createIcons();
+    }
+
+    function renderMapForUnits(units) {
+      if (!map) return;
       mapLayers.forEach(l => map.removeLayer(l));
       mapLayers.length = 0;
 
-      fleetUnits.forEach(unit => {
-        if (unit.breadcrumbs && unit.breadcrumbs.length > 1) {
-          const line = L.polyline(unit.breadcrumbs.map(b => [b.lat, b.lng]), {
+      const bounds = L.latLngBounds([]);
+
+      units.forEach(unit => {
+        const timeline = unit.timeline || [];
+        if (timeline.length === 0) return;
+
+        // Calculate visible waypoints based on timeline slider progress (0% - 100%)
+        const visibleCount = Math.max(1, Math.ceil((playbackProgress / 100) * timeline.length));
+        const visibleTimeline = timeline.slice(0, visibleCount);
+
+        // Draw Starting Point "S"
+        const startIcon = L.divIcon({
+          className: 'start-pin',
+          html: `<div class="start-circle-pin">S</div>`,
+          iconSize: [28, 28], iconAnchor: [14, 14]
+        });
+        const startMarker = L.marker([timeline[0].lat, timeline[0].lng], { icon: startIcon }).addTo(map);
+        startMarker.bindPopup(`<strong>Starting Point (S)</strong><br/>${unit.name}<br/>${timeline[0].label}`);
+        mapLayers.push(startMarker);
+        bounds.extend([timeline[0].lat, timeline[0].lng]);
+
+        // Draw Road Traversal Polyline
+        if (visibleTimeline.length > 1) {
+          const latlngs = visibleTimeline.map(t => [t.lat, t.lng]);
+          const line = L.polyline(latlngs, {
             color: '#10b981', weight: 4.5, opacity: 0.85
           }).addTo(map);
           mapLayers.push(line);
         }
 
-        const agentIcon = L.divIcon({
-          className: 'admin-pin',
+        // Draw Current / Playback Position Pin
+        const curPt = visibleTimeline[visibleTimeline.length - 1];
+        const curIcon = L.divIcon({
+          className: 'agent-pin',
           html: `
             <div class="agent-circle-pin">
               <div class="radar-pulse-ring"></div>
@@ -319,33 +537,72 @@
           `,
           iconSize: [44, 44], iconAnchor: [22, 22]
         });
-
-        const marker = L.marker([unit.lat, unit.lng], { icon: agentIcon }).addTo(map);
-        marker.bindPopup(`
+        const curMarker = L.marker([curPt.lat, curPt.lng], { icon: curIcon, zIndexOffset: 1000 }).addTo(map);
+        curMarker.bindPopup(`
           <div class="p-1 space-y-1">
             <strong class="text-slate-900">${unit.name}</strong>
-            <p class="text-xs text-slate-600">${unit.email}</p>
-            <div class="text-xs font-bold text-emerald-600">⚡ Battery: ${unit.battery}% ${unit.isCharging ? '(Charging)' : ''}</div>
-            <div class="text-xs text-blue-700">📍 ${unit.lastLocation}</div>
-            <div class="text-xs text-slate-500">Speed: ${unit.speedKmh} km/h · Distance: ${unit.distanceKm} km</div>
+            <div class="text-xs text-blue-700 font-bold">📍 ${curPt.label}</div>
+            <div class="text-xs font-semibold text-emerald-600">Time: ${curPt.time} · Distance: ${curPt.km} km</div>
+            <div class="text-xs text-slate-500">Battery: ⚡ ${unit.battery}% · Speed: ${unit.speedKmh} km/h</div>
           </div>
         `);
-        mapLayers.push(marker);
+        mapLayers.push(curMarker);
+        bounds.extend([curPt.lat, curPt.lng]);
       });
+
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
     }
 
-    function renderRoster(units) {
+    function renderSidebar(units) {
       const container = document.getElementById('rosterContainer');
-      document.getElementById('rosterCount').innerText = `${units.length} Active Agents`;
+      const sidebarTitle = document.getElementById('sidebarTitle');
 
-      container.innerHTML = units.map(unit => {
-        const batteryColor = unit.battery > 50 ? 'text-emerald-400 border-emerald-500/30' : (unit.battery >= 20 ? 'text-amber-400 border-amber-500/30' : 'text-rose-500 border-rose-500/40 animate-pulse');
-        const movementBadge = unit.status === 'Moving' 
-          ? `<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">🟢 Moving (${unit.speedKmh} km/h)</span>`
-          : `<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">🟡 Stationary</span>`;
+      if (selectedAgentId !== 'ALL' && units.length === 1) {
+        // Render Single Agent Chronological Timeline
+        const unit = units[0];
+        sidebarTitle.innerText = `${unit.name}'s Day Timeline`;
+        document.getElementById('rosterCount').innerText = `${unit.timeline.length} Milestones`;
 
-        return `
-          <div class="bg-slate-950/80 hover:bg-slate-800/90 border border-slate-800 rounded-2xl p-3 space-y-2 transition shadow cursor-pointer" onclick="focusAgent('${unit.id}')">
+        container.innerHTML = `
+          <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 space-y-2 mb-3">
+            <div class="flex items-center space-x-3">
+              <img src="${unit.photoUrl}" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500">
+              <div>
+                <h4 class="text-xs font-extrabold text-white">${unit.name}</h4>
+                <p class="text-[10px] text-slate-400">${unit.email}</p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800 font-mono text-emerald-400">
+              <span>⚡ Battery: ${unit.battery}%</span>
+              <span>Total: ${unit.distanceKm} km</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Chronological Sequence</p>
+            ${unit.timeline.map((item, idx) => `
+              <div class="bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 rounded-xl p-2.5 flex items-start space-x-2.5 transition cursor-pointer" onclick="jumpToMilestone(${idx}, ${unit.timeline.length})">
+                <span class="w-5 h-5 rounded-full ${idx === 0 ? 'bg-emerald-500 text-white font-black' : 'bg-slate-800 text-slate-300 font-bold'} text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx === 0 ? 'S' : idx}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-white truncate">${item.label}</span>
+                    <span class="text-[10px] font-mono text-blue-400 shrink-0">${item.time}</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 font-mono mt-0.5">Offset: ${item.km} km · Lat: ${item.lat.toFixed(4)}, Lng: ${item.lng.toFixed(4)}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        // Render All Fleet Units Roster
+        sidebarTitle.innerText = "Workforce Fleet Roster";
+        document.getElementById('rosterCount').innerText = `${units.length} Units`;
+
+        container.innerHTML = units.map(unit => `
+          <div class="bg-slate-950/80 hover:bg-slate-800/90 border border-slate-800 rounded-2xl p-3 space-y-2 transition shadow cursor-pointer" onclick="selectAgentFromRoster('${unit.id}')">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2.5">
                 <img src="${unit.photoUrl}" class="w-9 h-9 rounded-full object-cover border-2 border-emerald-500">
@@ -354,13 +611,15 @@
                   <p class="text-[10px] text-slate-400">${unit.email}</p>
                 </div>
               </div>
-              <div class="px-2 py-1 rounded-lg bg-slate-900 border ${batteryColor} text-xs font-black">
+              <div class="px-2 py-1 rounded-lg bg-slate-900 border text-emerald-400 border-emerald-500/30 text-xs font-black">
                 ⚡ ${unit.battery}%
               </div>
             </div>
 
             <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
-              ${movementBadge}
+              <span class="px-2 py-0.5 rounded-full ${unit.status === 'Moving' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'} text-[10px] font-bold">
+                ${unit.status === 'Moving' ? `🟢 Moving (${unit.speedKmh} km/h)` : '🟡 Stationary'}
+              </span>
               <span class="text-slate-300 font-mono font-bold">${unit.distanceKm} km · ${unit.duration}</span>
             </div>
 
@@ -368,39 +627,97 @@
               📍 ${unit.lastLocation}
             </div>
           </div>
-        `;
-      }).join('');
+        `).join('');
+      }
     }
 
-    function focusAgent(id) {
-      const unit = fleetUnits.find(u => u.id === id);
-      if (unit && map) {
-        map.setView([unit.lat, unit.lng], 16, { animate: true });
+    function selectAgentFromRoster(agentId) {
+      selectedAgentId = agentId;
+      document.getElementById('agentFilterSelect').value = agentId;
+      renderDashboard();
+    }
+
+    function jumpToMilestone(idx, total) {
+      playbackProgress = Math.round(((idx + 1) / total) * 100);
+      document.getElementById('timelineSlider').value = playbackProgress;
+      onTimelineSliderChange(playbackProgress);
+    }
+
+    // =========================================================================
+    // TIMELINE SCRUBBER & PLAYBACK CONTROLS
+    // =========================================================================
+    function onTimelineSliderChange(val) {
+      playbackProgress = parseInt(val, 10);
+      const hrs = 8 + Math.floor((playbackProgress / 100) * 10);
+      const mins = Math.floor(((playbackProgress % 10) / 10) * 60);
+      const ampm = hrs >= 12 ? 'PM' : 'AM';
+      const displayHrs = hrs > 12 ? hrs - 12 : hrs;
+      document.getElementById('playbackTimeLabel').innerText = `Timeline: ${String(displayHrs).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${ampm}`;
+
+      const unitsForDate = multiDayFleetDatabase[selectedDate] || [];
+      const visibleUnits = selectedAgentId === 'ALL' ? unitsForDate : unitsForDate.filter(u => u.id === selectedAgentId);
+      renderMapForUnits(visibleUnits);
+    }
+
+    function togglePlayback() {
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('iconPlay');
+      if (isPlaying) {
+        btn.setAttribute('data-lucide', 'pause');
+        lucide.createIcons();
+        if (playbackProgress >= 100) playbackProgress = 0;
+        playbackInterval = setInterval(() => {
+          playbackProgress += (2 * playbackSpeed);
+          if (playbackProgress >= 100) {
+            playbackProgress = 100;
+            togglePlayback();
+          }
+          document.getElementById('timelineSlider').value = playbackProgress;
+          onTimelineSliderChange(playbackProgress);
+        }, 300);
+      } else {
+        btn.setAttribute('data-lucide', 'play');
+        lucide.createIcons();
+        if (playbackInterval) clearInterval(playbackInterval);
       }
+    }
+
+    function setPlaybackSpeed(spd) {
+      playbackSpeed = spd;
+      document.getElementById('spd1').className = spd === 1 ? 'px-1.5 py-0.5 rounded bg-blue-600 text-[10px] font-bold text-white' : 'px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400 hover:text-white';
+      document.getElementById('spd2').className = spd === 2 ? 'px-1.5 py-0.5 rounded bg-blue-600 text-[10px] font-bold text-white' : 'px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400 hover:text-white';
+      document.getElementById('spd5').className = spd === 5 ? 'px-1.5 py-0.5 rounded bg-blue-600 text-[10px] font-bold text-white' : 'px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400 hover:text-white';
     }
 
     function filterRoster(query) {
       const q = query.toLowerCase();
-      const filtered = fleetUnits.filter(u => 
+      const unitsForDate = multiDayFleetDatabase[selectedDate] || [];
+      const filtered = unitsForDate.filter(u => 
         u.name.toLowerCase().includes(q) || 
         u.email.toLowerCase().includes(q) || 
         u.lastLocation.toLowerCase().includes(q)
       );
-      renderRoster(filtered);
+      renderSidebar(filtered);
     }
 
     function refreshFleetMap() {
-      renderMarkers();
-      renderRoster(fleetUnits);
-      alert("✓ Master Fleet Telematics & GPS positions refreshed.");
+      playbackProgress = 100;
+      document.getElementById('timelineSlider').value = 100;
+      renderDashboard();
     }
 
     function exportMasterFleetReport() {
-      const blob = new Blob([JSON.stringify(fleetUnits, null, 2)], { type: 'application/json' });
+      const unitsForDate = multiDayFleetDatabase[selectedDate] || [];
+      const data = {
+        date: selectedDate,
+        totalFleetUnits: unitsForDate.length,
+        units: unitsForDate
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Master_Fleet_Report_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `Fleet_Telematics_${selectedDate}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
