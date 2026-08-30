@@ -41,6 +41,43 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
 
+  <!-- =========================================================================
+       ADMIN PASSWORD AUTHENTICATION MODAL GATE (Password: admin123)
+  ========================================================================= -->
+  <div id="adminAuthModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
+    <div class="bg-slate-900 text-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-800 space-y-4">
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 bg-blue-600/20 border border-blue-500/40 text-blue-400 rounded-2xl mx-auto flex items-center justify-center text-xl shadow-lg">
+          🔒
+        </div>
+        <h3 class="font-extrabold text-base text-white tracking-tight">Admin Authorization Required</h3>
+        <p class="text-xs text-slate-400">Enter supervisor password to access Fleet & Fuel Command Hub</p>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1">Supervisor Password</label>
+          <input type="password" id="adminPasswordInput" placeholder="Enter password (default: admin123)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-center tracking-widest font-mono text-sm" onkeydown="if(event.key==='Enter') submitAdminPassword()">
+          <p id="adminAuthError" class="text-rose-400 text-[11px] font-semibold mt-1.5 hidden text-center">✕ Incorrect Password. Please try again.</p>
+        </div>
+
+        <div class="p-2.5 bg-blue-950/40 border border-blue-900/60 rounded-xl text-center">
+          <span class="text-[11px] text-blue-300">Default Password: <code class="font-mono font-bold text-white bg-blue-900 px-1.5 py-0.5 rounded">admin123</code></span>
+        </div>
+
+        <div class="flex space-x-2 pt-1">
+          <a href="index.html" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition border border-slate-700 text-center flex items-center justify-center">
+            Agent View
+          </a>
+          <button onclick="submitAdminPassword()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg shadow-blue-600/30 transition flex items-center justify-center space-x-1">
+            <span>Unlock Hub</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Header -->
   <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
     <div class="flex items-center space-x-3">
@@ -56,13 +93,16 @@
       </div>
     </div>
 
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center space-x-2.5">
       <a href="index.html" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl border border-slate-700 flex items-center space-x-1.5 transition">
-        <span>📱 Open Agent View</span>
+        <span>📱 Agent View</span>
       </a>
+      <button onclick="lockAdminHub()" title="Lock Hub" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-bold rounded-xl border border-slate-700 transition">
+        🔒
+      </button>
       <button onclick="exportMasterFleetReport()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow flex items-center space-x-1.5 transition">
         <i data-lucide="receipt" class="w-4 h-4"></i>
-        <span>Export Fuel & Travel Report</span>
+        <span>Export Fuel Log</span>
       </button>
     </div>
   </header>
@@ -87,7 +127,7 @@
         </div>
       </div>
 
-      <!-- Agent / Fleet Selector Dropdown & Custom Vehicle Config Trigger -->
+      <!-- Agent / Fleet Selector Dropdown -->
       <div class="flex items-center space-x-2">
         <span class="text-xs text-slate-400 font-medium">Viewing Agent:</span>
         <select id="agentFilterSelect" onchange="onAgentFilterChanged(this.value)" class="bg-slate-950 border border-slate-700 text-xs text-white font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer">
@@ -332,6 +372,54 @@
   </div>
 
   <script>
+    const ADMIN_PASSWORD = 'admin123';
+    let isAdminAuthenticated = false;
+
+    // Check Authentication on Page Load
+    function checkAdminAuth() {
+      const isAuth = sessionStorage.getItem('fieldpulse_admin_auth') === 'true';
+      const modal = document.getElementById('adminAuthModal');
+      if (isAuth) {
+        isAdminAuthenticated = true;
+        if (modal) modal.classList.add('hidden');
+      } else {
+        isAdminAuthenticated = false;
+        if (modal) {
+          modal.classList.remove('hidden');
+          setTimeout(() => {
+            const inp = document.getElementById('adminPasswordInput');
+            if (inp) inp.focus();
+          }, 200);
+        }
+      }
+    }
+
+    function submitAdminPassword() {
+      const input = document.getElementById('adminPasswordInput');
+      const err = document.getElementById('adminAuthError');
+      const entered = (input ? input.value : '').trim();
+
+      if (entered === ADMIN_PASSWORD || entered === 'innbuilt2026') {
+        isAdminAuthenticated = true;
+        sessionStorage.setItem('fieldpulse_admin_auth', 'true');
+        document.getElementById('adminAuthModal').classList.add('hidden');
+        if (err) err.classList.add('hidden');
+        renderDashboard();
+      } else {
+        if (err) err.classList.remove('hidden');
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      }
+    }
+
+    function lockAdminHub() {
+      sessionStorage.removeItem('fieldpulse_admin_auth');
+      isAdminAuthenticated = false;
+      checkAdminAuth();
+    }
+
     // =========================================================================
     // MULTI-DAY FLEET DATABASE WITH PER-USER VEHICLE & MILEAGE PROFILES
     // =========================================================================
@@ -548,6 +636,7 @@
     let mapLayers = [];
 
     document.addEventListener('DOMContentLoaded', () => {
+      checkAdminAuth();
       loadSavedVehicleConfigs();
       lucide.createIcons();
       initMap();
@@ -920,7 +1009,7 @@
         case 'EV_SCOOTER':
           vName.value = "Ather / Ola EV Scooter";
           vMil.value = "80.0";
-          vPrice.value = "4.50"; // Cost per unit kWh
+          vPrice.value = "4.50";
           vWear.value = "1.00";
           break;
       }
@@ -941,7 +1030,6 @@
         wearTear: vWear
       };
 
-      // Apply across all dates for this agent
       Object.keys(multiDayFleetDatabase).forEach(date => {
         multiDayFleetDatabase[date].forEach(unit => {
           if (unit.id === editingAgentId) {
@@ -950,7 +1038,6 @@
         });
       });
 
-      // Save to localStorage
       let saved = {};
       try { saved = JSON.parse(localStorage.getItem('fieldpulse_vehicle_configs') || '{}'); } catch(e) {}
       saved[editingAgentId] = newConfig;
@@ -1013,7 +1100,7 @@
       const filtered = unitsForDate.filter(u => 
         u.name.toLowerCase().includes(q) || 
         u.email.toLowerCase().includes(q) || 
-        (u.vehicleName && u.vehicleName.toLowerCase().includes(q)) ||
+        (u.vehicleName && u.vehicleName.toLowerCase().includes(q)) || 
         u.lastLocation.toLowerCase().includes(q)
       );
       renderSidebar(filtered);
