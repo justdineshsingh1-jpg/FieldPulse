@@ -1449,11 +1449,6 @@
 
     function switchAppView(view) {
       if (view === 'admin') {
-        const isAuth = isAdminAuthenticated || sessionStorage.getItem('fieldpulse_admin_auth') === 'true';
-        if (!isAuth) {
-          openAdminAuthModal();
-          return;
-        }
         activateAdminView();
       } else {
         activateAgentView();

@@ -1,0 +1,409 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>InnBuilt Industrial - Enterprise Admin Command Center</title>
+  <!-- Tailwind CSS & Lucide -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    
+    .agent-circle-pin {
+      width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+      border: 2.5px solid #10b981; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      position: relative; z-index: 10;
+    }
+    .agent-circle-pin img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .radar-pulse-ring {
+      position: absolute; width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(16, 185, 129, 0.35); border: 2px solid #10b981;
+      animation: haloPulse 2s infinite cubic-bezier(0.66, 0, 0, 1);
+      pointer-events: none; z-index: 1;
+    }
+    @keyframes haloPulse { 0% { transform: scale(0.85); opacity: 0.8; } 50% { transform: scale(1.6); opacity: 0; } 100% { transform: scale(1.6); opacity: 0; } }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- Header -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow">
+        IB
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="font-black text-sm text-white tracking-tight">InnBuilt Industrial</h1>
+          <span class="text-[10px] bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-mono font-bold">ADMIN COMMAND CENTER</span>
+        </div>
+        <p class="text-[11px] text-slate-400">Master Multi-Agent Fleet Telematics & Live Road Tracking</p>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-3">
+      <a href="index.html" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl border border-slate-700 flex items-center space-x-1.5 transition">
+        <span>📱 Open Agent View</span>
+      </a>
+      <button onclick="exportMasterFleetReport()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow flex items-center space-x-1.5 transition">
+        <i data-lucide="download" class="w-4 h-4"></i>
+        <span>Export Fleet Log</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Admin Dashboard -->
+  <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-4">
+    
+    <!-- Top KPI Metrics Banner -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+        <div>
+          <p class="text-xs text-slate-400 font-medium">Active Units in Field</p>
+          <h3 class="text-2xl font-black text-white mt-0.5" id="kpiUnits">4 Online</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">🟢</div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+        <div>
+          <p class="text-xs text-slate-400 font-medium">Fleet Road Distance</p>
+          <h3 class="text-2xl font-black text-white mt-0.5 font-mono">44.0 km</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg">🚗</div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+        <div>
+          <p class="text-xs text-slate-400 font-medium">Avg Battery Health</p>
+          <h3 class="text-2xl font-black text-emerald-400 mt-0.5 font-mono">⚡ 72%</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center font-bold text-lg">🔋</div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+        <div>
+          <p class="text-xs text-slate-400 font-medium">Total Milestones (~3km)</p>
+          <h3 class="text-2xl font-black text-white mt-0.5 font-mono">18 Logged</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">📍</div>
+      </div>
+    </div>
+
+    <!-- Master Fleet Split Screen Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      
+      <!-- Master Multi-Agent Fleet GIS Map -->
+      <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[600px]">
+        <!-- Map Header Toolbar -->
+        <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-halo"></span>
+            <h3 class="font-extrabold text-sm text-white">Live Multi-Agent Fleet Map (Google GIS)</h3>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <!-- Google Streets & Google Hybrid Switcher -->
+            <div class="bg-slate-800 rounded-lg p-1 flex space-x-1 text-xs font-bold border border-slate-700">
+              <button onclick="setMapTile('googleStreets')" id="btnStreets" class="px-2.5 py-1 rounded bg-blue-600 text-white font-bold">🚗 Streets</button>
+              <button onclick="setMapTile('googleHybrid')" id="btnHybrid" class="px-2.5 py-1 rounded text-slate-400 hover:text-white font-bold">🛰️ Hybrid</button>
+            </div>
+            
+            <button onclick="refreshFleetMap()" title="Refresh Live GPS" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs border border-slate-700">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Master Leaflet Map Container -->
+        <div class="flex-1 w-full relative">
+          <div id="masterMap" class="w-full h-full"></div>
+          
+          <!-- Map Legend Overlay -->
+          <div class="absolute bottom-4 left-4 z-[400] bg-slate-900/90 backdrop-blur border border-slate-700 p-3 rounded-xl text-xs space-y-1.5 text-slate-300 shadow-xl">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 border border-white"></span>
+              <span>Online Unit (Live Photo Pin)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-4 h-1 bg-[#10b981] rounded-full"></span>
+              <span>Road Traversal Polyline</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Workforce Telematics Roster -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[600px]">
+        <!-- Roster Header & Search -->
+        <div class="p-4 border-b border-slate-800 space-y-2.5 bg-slate-900/90">
+          <div class="flex items-center justify-between">
+            <h3 class="font-extrabold text-sm text-white">Workforce Telematics Roster</h3>
+            <span class="text-xs text-blue-400 font-bold" id="rosterCount">4 Active Agents</span>
+          </div>
+
+          <div class="relative">
+            <input type="text" id="searchInput" oninput="filterRoster(this.value)" placeholder="Search agent name, email or site..." class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 pl-8 focus:outline-none focus:border-blue-600">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
+          </div>
+        </div>
+
+        <!-- Scrollable Agent Cards List -->
+        <div id="rosterContainer" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2.5">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Roster Footer Actions -->
+        <div class="p-3 bg-slate-950 border-t border-slate-800">
+          <button onclick="exportMasterFleetReport()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-blue-600/30 transition">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            <span>Export Master Daily Fleet Report</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const fleetUnits = [
+      {
+        id: "unit-01",
+        name: "Dinesh Kumar Singh (You)",
+        email: "dinesh.singh@dhanpurna.net",
+        photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        battery: 50,
+        isCharging: false,
+        status: "Moving",
+        speedKmh: 5.6,
+        distanceKm: 8.4,
+        duration: "04:30:00",
+        lastLocation: "Active Road Transit (Riverfront)",
+        lat: 26.1885,
+        lng: 91.7440,
+        breadcrumbs: [
+          { lat: 26.1852, lng: 91.7380 },
+          { lat: 26.1865, lng: 91.7405 },
+          { lat: 26.1880, lng: 91.7428 },
+          { lat: 26.1885, lng: 91.7440 }
+        ]
+      },
+      {
+        id: "unit-02",
+        name: "Rakesh Barua",
+        email: "rakesh.barua@pwdassam.gov.in",
+        photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+        battery: 88,
+        isCharging: true,
+        status: "Moving",
+        speedKmh: 6.2,
+        distanceKm: 14.2,
+        duration: "05:10:00",
+        lastLocation: "Bridge Pier Foundation P-4 (~3km Milestone)",
+        lat: 26.1920,
+        lng: 91.7180,
+        breadcrumbs: [
+          { lat: 26.1880, lng: 91.7120 },
+          { lat: 26.1900, lng: 91.7150 },
+          { lat: 26.1920, lng: 91.7180 }
+        ]
+      },
+      {
+        id: "unit-03",
+        name: "Amit Bora",
+        email: "amit.bora@pwdassam.gov.in",
+        photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+        battery: 32,
+        isCharging: false,
+        status: "Stationary",
+        speedKmh: 0.0,
+        distanceKm: 9.8,
+        duration: "03:45:00",
+        lastLocation: "Material Testing Lab (Idle on Site)",
+        lat: 26.1820,
+        lng: 91.7510,
+        breadcrumbs: [
+          { lat: 26.1790, lng: 91.7450 },
+          { lat: 26.1820, lng: 91.7510 }
+        ]
+      },
+      {
+        id: "unit-04",
+        name: "Rahul Das",
+        email: "rahul.das@pwdassam.gov.in",
+        photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+        battery: 18,
+        isCharging: false,
+        status: "Moving",
+        speedKmh: 4.8,
+        distanceKm: 11.6,
+        duration: "04:15:00",
+        lastLocation: "Fancy Bazar Market Trenching (~3km)",
+        lat: 26.1840,
+        lng: 91.7350,
+        breadcrumbs: [
+          { lat: 26.1800, lng: 91.7280 },
+          { lat: 26.1840, lng: 91.7350 }
+        ]
+      }
+    ];
+
+    let map = null;
+    let tileLayer = null;
+    let mapLayers = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initMap();
+      renderRoster(fleetUnits);
+    });
+
+    function initMap() {
+      map = L.map('masterMap', { zoomControl: true }).setView([26.1875, 91.7380], 14);
+      tileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; Google Maps'
+      }).addTo(map);
+
+      renderMarkers();
+    }
+
+    function setMapTile(type) {
+      if (!map) return;
+      if (tileLayer) map.removeLayer(tileLayer);
+      if (type === 'googleHybrid') {
+        tileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+          maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
+        }).addTo(map);
+        document.getElementById('btnHybrid').className = 'px-2.5 py-1 rounded bg-blue-600 text-white font-bold';
+        document.getElementById('btnStreets').className = 'px-2.5 py-1 rounded text-slate-400 hover:text-white font-bold';
+      } else {
+        tileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+          maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
+        }).addTo(map);
+        document.getElementById('btnStreets').className = 'px-2.5 py-1 rounded bg-blue-600 text-white font-bold';
+        document.getElementById('btnHybrid').className = 'px-2.5 py-1 rounded text-slate-400 hover:text-white font-bold';
+      }
+    }
+
+    function renderMarkers() {
+      mapLayers.forEach(l => map.removeLayer(l));
+      mapLayers.length = 0;
+
+      fleetUnits.forEach(unit => {
+        if (unit.breadcrumbs && unit.breadcrumbs.length > 1) {
+          const line = L.polyline(unit.breadcrumbs.map(b => [b.lat, b.lng]), {
+            color: '#10b981', weight: 4.5, opacity: 0.85
+          }).addTo(map);
+          mapLayers.push(line);
+        }
+
+        const agentIcon = L.divIcon({
+          className: 'admin-pin',
+          html: `
+            <div class="agent-circle-pin">
+              <div class="radar-pulse-ring"></div>
+              <img src="${unit.photoUrl}" alt="${unit.name}">
+            </div>
+          `,
+          iconSize: [44, 44], iconAnchor: [22, 22]
+        });
+
+        const marker = L.marker([unit.lat, unit.lng], { icon: agentIcon }).addTo(map);
+        marker.bindPopup(`
+          <div class="p-1 space-y-1">
+            <strong class="text-slate-900">${unit.name}</strong>
+            <p class="text-xs text-slate-600">${unit.email}</p>
+            <div class="text-xs font-bold text-emerald-600">⚡ Battery: ${unit.battery}% ${unit.isCharging ? '(Charging)' : ''}</div>
+            <div class="text-xs text-blue-700">📍 ${unit.lastLocation}</div>
+            <div class="text-xs text-slate-500">Speed: ${unit.speedKmh} km/h · Distance: ${unit.distanceKm} km</div>
+          </div>
+        `);
+        mapLayers.push(marker);
+      });
+    }
+
+    function renderRoster(units) {
+      const container = document.getElementById('rosterContainer');
+      document.getElementById('rosterCount').innerText = `${units.length} Active Agents`;
+
+      container.innerHTML = units.map(unit => {
+        const batteryColor = unit.battery > 50 ? 'text-emerald-400 border-emerald-500/30' : (unit.battery >= 20 ? 'text-amber-400 border-amber-500/30' : 'text-rose-500 border-rose-500/40 animate-pulse');
+        const movementBadge = unit.status === 'Moving' 
+          ? `<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">🟢 Moving (${unit.speedKmh} km/h)</span>`
+          : `<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">🟡 Stationary</span>`;
+
+        return `
+          <div class="bg-slate-950/80 hover:bg-slate-800/90 border border-slate-800 rounded-2xl p-3 space-y-2 transition shadow cursor-pointer" onclick="focusAgent('${unit.id}')">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2.5">
+                <img src="${unit.photoUrl}" class="w-9 h-9 rounded-full object-cover border-2 border-emerald-500">
+                <div>
+                  <h4 class="text-xs font-extrabold text-white">${unit.name}</h4>
+                  <p class="text-[10px] text-slate-400">${unit.email}</p>
+                </div>
+              </div>
+              <div class="px-2 py-1 rounded-lg bg-slate-900 border ${batteryColor} text-xs font-black">
+                ⚡ ${unit.battery}%
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
+              ${movementBadge}
+              <span class="text-slate-300 font-mono font-bold">${unit.distanceKm} km · ${unit.duration}</span>
+            </div>
+
+            <div class="text-[11px] text-blue-300 font-medium truncate">
+              📍 ${unit.lastLocation}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function focusAgent(id) {
+      const unit = fleetUnits.find(u => u.id === id);
+      if (unit && map) {
+        map.setView([unit.lat, unit.lng], 16, { animate: true });
+      }
+    }
+
+    function filterRoster(query) {
+      const q = query.toLowerCase();
+      const filtered = fleetUnits.filter(u => 
+        u.name.toLowerCase().includes(q) || 
+        u.email.toLowerCase().includes(q) || 
+        u.lastLocation.toLowerCase().includes(q)
+      );
+      renderRoster(filtered);
+    }
+
+    function refreshFleetMap() {
+      renderMarkers();
+      renderRoster(fleetUnits);
+      alert("✓ Master Fleet Telematics & GPS positions refreshed.");
+    }
+
+    function exportMasterFleetReport() {
+      const blob = new Blob([JSON.stringify(fleetUnits, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Master_Fleet_Report_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
