@@ -52,7 +52,7 @@
           <h1 class="font-black text-sm text-white tracking-tight">InnBuilt Industrial</h1>
           <span class="text-[10px] bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-mono font-bold">ADMIN & FUEL AUDIT HUB</span>
         </div>
-        <p class="text-[11px] text-slate-400">Multi-Agent Distance Audit, Fuel Reimbursement & Timeline Tracking</p>
+        <p class="text-[11px] text-slate-400">Custom Vehicle & Mileage Fuel Engine, Distance Audit & Telematics</p>
       </div>
     </div>
 
@@ -70,7 +70,7 @@
   <!-- Main Admin Dashboard -->
   <main class="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto space-y-4">
     
-    <!-- 1. CALENDAR DATE, AGENT SELECTOR & FUEL RATE CONFIG BAR -->
+    <!-- 1. CALENDAR DATE, AGENT SELECTOR & QUICK CONFIG BAR -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-xl flex flex-wrap items-center justify-between gap-3">
       
       <!-- Calendar & Quick Date Buttons -->
@@ -87,37 +87,21 @@
         </div>
       </div>
 
-      <!-- Fuel & Vehicle Rate Configuration -->
-      <div class="flex items-center space-x-2 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
-        <span class="text-slate-400 font-medium">⛽ Fuel Rate:</span>
-        <select id="vehicleTypeSelect" onchange="onFuelRateChanged(this.value)" class="bg-slate-900 border border-slate-700 text-emerald-400 font-bold rounded-lg px-2 py-1 focus:outline-none cursor-pointer">
-          <option value="3.5">🏍️ Bike / 2-Wheeler (₹3.50 / km)</option>
-          <option value="8.0">🚗 Car / 4-Wheeler (₹8.00 / km)</option>
-          <option value="5.0">🚐 Van / Utility (₹5.00 / km)</option>
-          <option value="CUSTOM">✏️ Custom Rate</option>
-        </select>
-        <div id="customRateContainer" class="hidden items-center space-x-1">
-          <span class="text-slate-400">₹</span>
-          <input type="number" id="customRateInput" step="0.5" value="3.5" oninput="onCustomRateInput(this.value)" class="w-14 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs text-white font-mono font-bold focus:outline-none">
-          <span class="text-slate-400">/km</span>
-        </div>
-      </div>
-
-      <!-- Agent / Fleet Selector Dropdown -->
+      <!-- Agent / Fleet Selector Dropdown & Custom Vehicle Config Trigger -->
       <div class="flex items-center space-x-2">
-        <span class="text-xs text-slate-400 font-medium">Agent:</span>
+        <span class="text-xs text-slate-400 font-medium">Viewing Agent:</span>
         <select id="agentFilterSelect" onchange="onAgentFilterChanged(this.value)" class="bg-slate-950 border border-slate-700 text-xs text-white font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer">
           <option value="ALL">🌐 All Fleet Agents (Combined Overview)</option>
-          <option value="unit-01">👤 Dinesh Kumar Singh</option>
-          <option value="unit-02">👤 Rakesh Barua</option>
-          <option value="unit-03">👤 Amit Bora</option>
-          <option value="unit-04">👤 Rahul Das</option>
+          <option value="unit-01">👤 Dinesh Kumar Singh (Hero Splendor)</option>
+          <option value="unit-02">👤 Rakesh Barua (Honda Activa)</option>
+          <option value="unit-03">👤 Amit Bora (Swift Dzire)</option>
+          <option value="unit-04">👤 Rahul Das (Bajaj Pulsar)</option>
         </select>
       </div>
 
     </div>
 
-    <!-- 2. TOP KPI METRICS BANNER (WITH FUEL REIMBURSEMENT BILL) -->
+    <!-- 2. TOP KPI METRICS BANNER -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
         <div>
@@ -138,8 +122,8 @@
       <!-- Fuel & Conveyance Bill Total -->
       <div class="bg-gradient-to-br from-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
         <div>
-          <p class="text-xs text-emerald-300 font-medium">Total Fuel Reimbursement</p>
-          <h3 class="text-xl font-black text-emerald-400 mt-0.5 font-mono" id="kpiFuelBill">₹154.00</h3>
+          <p class="text-xs text-emerald-300 font-medium">Fuel Reimbursement Total</p>
+          <h3 class="text-xl font-black text-emerald-400 mt-0.5 font-mono" id="kpiFuelBill">₹148.50</h3>
         </div>
         <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold text-base">⛽</div>
       </div>
@@ -258,9 +242,98 @@
 
   </main>
 
+  <!-- =========================================================================
+       VEHICLE, MILEAGE & FUEL PROFILE CUSTOMIZATION MODAL
+  ========================================================================= -->
+  <div id="vehicleConfigModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[99999] hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 text-white w-full max-w-md rounded-3xl p-5 shadow-2xl border border-slate-800 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-bold">
+            🏍️
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm text-white" id="modalAgentName">Customise Vehicle & Mileage</h3>
+            <p class="text-[11px] text-slate-400">Configure vehicle type, mileage & fuel reimbursement rates</p>
+          </div>
+        </div>
+        <button onclick="closeVehicleModal()" class="text-slate-400 hover:text-white p-1">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <!-- Quick Preset Selector -->
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Quick Vehicle Presets</label>
+          <select id="modalPresetSelect" onchange="applyVehiclePreset(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500">
+            <option value="CUSTOM">-- Custom Settings --</option>
+            <option value="SPLENDOR">🏍️ Hero Splendor / 100cc Bike (55 km/L, Petrol ₹98.50)</option>
+            <option value="ACTIVA">🛵 Honda Activa / Scooter (42 km/L, Petrol ₹98.50)</option>
+            <option value="PULSAR">🏍️ Bajaj Pulsar / 150cc Bike (45 km/L, Petrol ₹98.50)</option>
+            <option value="SWIFT">🚗 Maruti Swift / Petrol Car (18 km/L, Petrol ₹98.50)</option>
+            <option value="BOLERO">🚙 Mahindra Bolero / Diesel (13 km/L, Diesel ₹89.20)</option>
+            <option value="EV_SCOOTER">⚡ EV Scooter (₹1.10 per km effective)</option>
+          </select>
+        </div>
+
+        <!-- Vehicle Model & Reg No -->
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Vehicle Model & Registration No.</label>
+          <input type="text" id="modalVehicleName" placeholder="e.g. Hero Splendor Plus (AS-01-EF-4521)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500 font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Mileage km/L -->
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">Vehicle Mileage (km/L)</label>
+            <input type="number" id="modalMileage" step="0.5" value="50" oninput="calculateModalEffectiveRate()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold focus:outline-none focus:border-emerald-500">
+          </div>
+
+          <!-- Fuel Price ₹/L -->
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">Fuel Price (₹ / Litre)</label>
+            <input type="number" id="modalFuelPrice" step="0.5" value="98.5" oninput="calculateModalEffectiveRate()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold focus:outline-none focus:border-emerald-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Wear & Tear / Maintenance Allowance ₹/km -->
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">Wear & Tear (₹/km)</label>
+            <input type="number" id="modalWearTear" step="0.1" value="0.75" oninput="calculateModalEffectiveRate()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold focus:outline-none focus:border-emerald-500">
+          </div>
+
+          <!-- Calculated Effective Rate ₹/km -->
+          <div>
+            <label class="block text-emerald-400 font-bold mb-1">Effective Rate (₹/km)</label>
+            <input type="text" id="modalEffectiveRate" readonly class="w-full bg-emerald-950/40 border border-emerald-500/40 rounded-xl px-3 py-2 text-emerald-400 font-mono font-black focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Formula Note -->
+        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
+          <div class="text-white font-semibold flex items-center space-x-1">
+            <span>Formula:</span>
+            <code class="text-emerald-400 font-mono">Rate = (Fuel Price ÷ Mileage) + Wear & Tear</code>
+          </div>
+          <p>Example: (₹98.50 ÷ 50 km/L) + ₹0.75 = <strong class="text-emerald-300">₹2.72 / km</strong></p>
+        </div>
+
+      </div>
+
+      <div class="flex space-x-2 pt-2 border-t border-slate-800">
+        <button onclick="closeVehicleModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition border border-slate-700">
+          Cancel
+        </button>
+        <button onclick="saveVehicleModal()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg shadow-emerald-600/30 transition">
+          Save & Apply Rate
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // =========================================================================
-    // MULTI-DAY FLEET DATABASE WITH ACCURATE DISTANCES
+    // MULTI-DAY FLEET DATABASE WITH PER-USER VEHICLE & MILEAGE PROFILES
     // =========================================================================
     const multiDayFleetDatabase = {
       "2026-08-30": [
@@ -269,7 +342,11 @@
           name: "Dinesh Kumar Singh",
           email: "dinesh.singh@dhanpurna.net",
           photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-          vehicleType: "Two-Wheeler",
+          vehicleName: "Hero Splendor Plus (AS-01-EF-4521)",
+          vehicleType: "Bike (100cc)",
+          mileageKmpl: 55.0,
+          fuelPrice: 98.50,
+          wearTear: 0.75,
           battery: 50,
           status: "Moving",
           speedKmh: 5.6,
@@ -289,7 +366,11 @@
           name: "Rakesh Barua",
           email: "rakesh.barua@pwdassam.gov.in",
           photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-          vehicleType: "Two-Wheeler",
+          vehicleName: "Honda Activa 6G (AS-01-DJ-2231)",
+          vehicleType: "Scooter (110cc)",
+          mileageKmpl: 42.0,
+          fuelPrice: 98.50,
+          wearTear: 0.80,
           battery: 88,
           status: "Moving",
           speedKmh: 6.2,
@@ -309,7 +390,11 @@
           name: "Amit Bora",
           email: "amit.bora@pwdassam.gov.in",
           photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-          vehicleType: "Four-Wheeler",
+          vehicleName: "Maruti Swift Dzire (AS-01-BZ-8822)",
+          vehicleType: "Petrol Car",
+          mileageKmpl: 18.0,
+          fuelPrice: 98.50,
+          wearTear: 1.50,
           battery: 32,
           status: "Stationary",
           speedKmh: 0.0,
@@ -328,7 +413,11 @@
           name: "Rahul Das",
           email: "rahul.das@pwdassam.gov.in",
           photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-          vehicleType: "Two-Wheeler",
+          vehicleName: "Bajaj Pulsar 150 (AS-01-CQ-9910)",
+          vehicleType: "Bike (150cc)",
+          mileageKmpl: 45.0,
+          fuelPrice: 98.50,
+          wearTear: 0.75,
           battery: 18,
           status: "Moving",
           speedKmh: 4.8,
@@ -349,7 +438,11 @@
           name: "Dinesh Kumar Singh",
           email: "dinesh.singh@dhanpurna.net",
           photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-          vehicleType: "Two-Wheeler",
+          vehicleName: "Hero Splendor Plus (AS-01-EF-4521)",
+          vehicleType: "Bike (100cc)",
+          mileageKmpl: 55.0,
+          fuelPrice: 98.50,
+          wearTear: 0.75,
           battery: 64,
           status: "Stationary",
           speedKmh: 0.0,
@@ -369,7 +462,11 @@
           name: "Rakesh Barua",
           email: "rakesh.barua@pwdassam.gov.in",
           photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-          vehicleType: "Two-Wheeler",
+          vehicleName: "Honda Activa 6G (AS-01-DJ-2231)",
+          vehicleType: "Scooter (110cc)",
+          mileageKmpl: 42.0,
+          fuelPrice: 98.50,
+          wearTear: 0.80,
           battery: 75,
           status: "Stationary",
           speedKmh: 0.0,
@@ -390,7 +487,11 @@
           name: "Dinesh Kumar Singh",
           email: "dinesh.singh@dhanpurna.net",
           photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-          vehicleType: "Two-Wheeler",
+          vehicleName: "Hero Splendor Plus (AS-01-EF-4521)",
+          vehicleType: "Bike (100cc)",
+          mileageKmpl: 55.0,
+          fuelPrice: 98.50,
+          wearTear: 0.75,
           battery: 82,
           status: "Stationary",
           speedKmh: 0.0,
@@ -407,10 +508,36 @@
       ]
     };
 
+    // Load saved vehicle profiles from LocalStorage if available
+    function loadSavedVehicleConfigs() {
+      const saved = localStorage.getItem('fieldpulse_vehicle_configs');
+      if (saved) {
+        try {
+          const cfg = JSON.parse(saved);
+          Object.keys(multiDayFleetDatabase).forEach(date => {
+            multiDayFleetDatabase[date].forEach(unit => {
+              if (cfg[unit.id]) {
+                Object.assign(unit, cfg[unit.id]);
+              }
+            });
+          });
+        } catch(e) { console.error(e); }
+      }
+    }
+
+    // Helper: Compute rate per km for a unit
+    function getUnitRatePerKm(unit) {
+      if (!unit.mileageKmpl || unit.mileageKmpl <= 0) return 3.5;
+      const fuelComponent = (unit.fuelPrice || 98.50) / unit.mileageKmpl;
+      const wearComponent = unit.wearTear || 0.75;
+      return fuelComponent + wearComponent;
+    }
+
     // Active State
     let selectedDate = "2026-08-30";
     let selectedAgentId = "ALL";
-    let fuelRatePerKm = 3.5; // Default: ₹3.50 per KM for bike/2-wheeler
+    let editingAgentId = null;
+
     let isPlaying = false;
     let playbackInterval = null;
     let playbackSpeed = 1;
@@ -421,6 +548,7 @@
     let mapLayers = [];
 
     document.addEventListener('DOMContentLoaded', () => {
+      loadSavedVehicleConfigs();
       lucide.createIcons();
       initMap();
       renderDashboard();
@@ -449,28 +577,6 @@
         document.getElementById('btnStreets').className = 'px-2.5 py-1 rounded bg-blue-600 text-white font-bold';
         document.getElementById('btnHybrid').className = 'px-2.5 py-1 rounded text-slate-400 hover:text-white font-bold';
       }
-    }
-
-    // =========================================================================
-    // FUEL RATE CONFIGURATION
-    // =========================================================================
-    function onFuelRateChanged(val) {
-      const customBox = document.getElementById('customRateContainer');
-      if (val === 'CUSTOM') {
-        customBox.classList.remove('hidden');
-        customBox.classList.add('flex');
-        fuelRatePerKm = parseFloat(document.getElementById('customRateInput').value) || 3.5;
-      } else {
-        customBox.classList.add('hidden');
-        customBox.classList.remove('flex');
-        fuelRatePerKm = parseFloat(val);
-      }
-      renderDashboard();
-    }
-
-    function onCustomRateInput(val) {
-      fuelRatePerKm = parseFloat(val) || 0;
-      renderDashboard();
     }
 
     // =========================================================================
@@ -506,7 +612,7 @@
     }
 
     // =========================================================================
-    // CORE RENDER DASHBOARD (WITH FUEL CALCULATION)
+    // CORE RENDER DASHBOARD (PER-USER VEHICLE & MILEAGE CALCULATION)
     // =========================================================================
     function renderDashboard() {
       const unitsForDate = multiDayFleetDatabase[selectedDate] || [];
@@ -514,14 +620,15 @@
         ? unitsForDate 
         : unitsForDate.filter(u => u.id === selectedAgentId);
 
-      // 1. Calculate Distances and Fuel Reimbursement Bills
+      // 1. Calculate Distances and Custom Fuel Bills per Agent
       let totalDist = 0;
       let totalMilestones = 0;
       let totalFuelBill = 0;
       visibleUnits.forEach(u => {
         totalDist += u.distanceKm;
         totalMilestones += (u.timeline ? u.timeline.length : 0);
-        totalFuelBill += (u.distanceKm * fuelRatePerKm);
+        const rate = getUnitRatePerKm(u);
+        totalFuelBill += (u.distanceKm * rate);
       });
 
       document.getElementById('kpiUnits').innerText = `${visibleUnits.length} Units`;
@@ -574,7 +681,8 @@
         // Current Pin
         const curPt = visibleTimeline[visibleTimeline.length - 1];
         const curDist = curPt.km;
-        const curFuel = (curDist * fuelRatePerKm).toFixed(2);
+        const rate = getUnitRatePerKm(unit);
+        const curFuel = (curDist * rate).toFixed(2);
 
         const curIcon = L.divIcon({
           className: 'agent-pin',
@@ -590,9 +698,10 @@
         curMarker.bindPopup(`
           <div class="p-1 space-y-1">
             <strong class="text-slate-900">${unit.name}</strong>
+            <div class="text-xs text-slate-600 font-semibold">${unit.vehicleName || 'Standard Vehicle'}</div>
             <div class="text-xs text-blue-700 font-bold">📍 ${curPt.label}</div>
-            <div class="text-xs font-semibold text-emerald-700">Distance: ${curDist} km · ⛽ Fuel Bill: ₹${curFuel}</div>
-            <div class="text-xs text-slate-500">Speed: ${unit.speedKmh} km/h · Battery: ⚡ ${unit.battery}%</div>
+            <div class="text-xs font-semibold text-emerald-700">Distance: ${curDist} km · ⛽ Fuel: ₹${curFuel}</div>
+            <div class="text-xs text-slate-500">Mileage: ${unit.mileageKmpl} km/L · Rate: ₹${rate.toFixed(2)}/km</div>
           </div>
         `);
         mapLayers.push(curMarker);
@@ -610,7 +719,10 @@
 
       if (selectedAgentId !== 'ALL' && units.length === 1) {
         const unit = units[0];
-        const agentFuelPayable = (unit.distanceKm * fuelRatePerKm).toFixed(2);
+        const rate = getUnitRatePerKm(unit);
+        const agentFuelPayable = (unit.distanceKm * rate).toFixed(2);
+        const fuelConsumedLiters = (unit.distanceKm / (unit.mileageKmpl || 50)).toFixed(2);
+
         sidebarTitle.innerText = `${unit.name}'s Fuel & Travel Audit`;
         document.getElementById('rosterCount').innerText = `${unit.distanceKm} km · ₹${agentFuelPayable}`;
 
@@ -625,24 +737,38 @@
                   <p class="text-[10px] text-slate-400">${unit.email}</p>
                 </div>
               </div>
-              <span class="text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">Verified Travel</span>
+              <button onclick="openVehicleModal('${unit.id}')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold border border-slate-700 flex items-center space-x-1 transition">
+                <span>⚙️ Edit Vehicle</span>
+              </button>
             </div>
 
-            <!-- Distance & Fuel Rate Summary -->
-            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-xs">
-              <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                <span class="text-[10px] text-slate-400 block">Total Distance</span>
-                <span class="font-mono font-black text-sm text-white">${unit.distanceKm} km</span>
+            <!-- Vehicle Details Banner -->
+            <div class="p-2 bg-slate-900/90 rounded-xl border border-slate-800 text-[11px] space-y-1">
+              <div class="flex items-center justify-between text-white font-bold">
+                <span>🚘 ${unit.vehicleName || 'Vehicle Profile'}</span>
+                <span class="text-emerald-400 font-mono">${unit.mileageKmpl} km/L</span>
               </div>
-              <div class="bg-emerald-950/40 p-2 rounded-xl border border-emerald-500/30">
-                <span class="text-[10px] text-emerald-300 block">Fuel Reimbursement</span>
-                <span class="font-mono font-black text-sm text-emerald-400">₹${agentFuelPayable}</span>
+              <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                <span>Fuel: ₹${unit.fuelPrice || 98.50}/L</span>
+                <span>Wear: +₹${unit.wearTear || 0.75}/km</span>
+                <span class="text-emerald-300 font-bold">= ₹${rate.toFixed(2)}/km</span>
               </div>
             </div>
 
-            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 font-mono">
-              <span>Rate: ₹${fuelRatePerKm.toFixed(2)}/km</span>
-              <span>Duration: ${unit.duration}</span>
+            <!-- Distance & Fuel Summary -->
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 text-center">
+                <span class="text-[10px] text-slate-400 block">Distance</span>
+                <span class="font-mono font-black text-xs text-white">${unit.distanceKm} km</span>
+              </div>
+              <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 text-center">
+                <span class="text-[10px] text-slate-400 block">Fuel Used</span>
+                <span class="font-mono font-black text-xs text-amber-300">${fuelConsumedLiters} L</span>
+              </div>
+              <div class="bg-emerald-950/40 p-2 rounded-xl border border-emerald-500/30 text-center">
+                <span class="text-[10px] text-emerald-300 block">Payable</span>
+                <span class="font-mono font-black text-xs text-emerald-400">₹${agentFuelPayable}</span>
+              </div>
             </div>
           </div>
 
@@ -650,7 +776,7 @@
           <div class="space-y-2">
             <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Itemized Distance Breakdown</p>
             ${unit.timeline.map((item, idx) => {
-              const legFuel = (item.km * fuelRatePerKm).toFixed(2);
+              const legFuel = (item.km * rate).toFixed(2);
               return `
                 <div class="bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 rounded-xl p-2.5 flex items-start space-x-2.5 transition cursor-pointer" onclick="jumpToMilestone(${idx}, ${unit.timeline.length})">
                   <span class="w-5 h-5 rounded-full ${idx === 0 ? 'bg-emerald-500 text-white font-black' : 'bg-slate-800 text-slate-300 font-bold'} text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx === 0 ? 'S' : idx}</span>
@@ -671,31 +797,37 @@
         document.getElementById('rosterCount').innerText = `${units.length} Units`;
 
         container.innerHTML = units.map(unit => {
-          const agentFuel = (unit.distanceKm * fuelRatePerKm).toFixed(2);
+          const rate = getUnitRatePerKm(unit);
+          const agentFuel = (unit.distanceKm * rate).toFixed(2);
           return `
-            <div class="bg-slate-950/80 hover:bg-slate-800/90 border border-slate-800 rounded-2xl p-3 space-y-2 transition shadow cursor-pointer" onclick="selectAgentFromRoster('${unit.id}')">
+            <div class="bg-slate-950/80 hover:bg-slate-800/90 border border-slate-800 rounded-2xl p-3 space-y-2 transition shadow cursor-pointer">
               <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2.5">
+                <div class="flex items-center space-x-2.5" onclick="selectAgentFromRoster('${unit.id}')">
                   <img src="${unit.photoUrl}" class="w-9 h-9 rounded-full object-cover border-2 border-emerald-500">
                   <div>
                     <h4 class="text-xs font-extrabold text-white">${unit.name}</h4>
-                    <p class="text-[10px] text-slate-400">${unit.email}</p>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[130px]">${unit.vehicleName || 'Vehicle Profile'}</p>
                   </div>
                 </div>
-                <!-- Fuel Amount Badge -->
-                <div class="px-2.5 py-1 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-xs font-mono font-black text-emerald-400 shadow">
-                  ₹${agentFuel}
+                <!-- Fuel Amount Badge & Edit Button -->
+                <div class="flex items-center space-x-1.5">
+                  <button onclick="event.stopPropagation(); openVehicleModal('${unit.id}')" title="Customise Vehicle & Mileage" class="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700 text-xs">
+                    ⚙️
+                  </button>
+                  <div class="px-2.5 py-1 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-xs font-mono font-black text-emerald-400 shadow" onclick="selectAgentFromRoster('${unit.id}')">
+                    ₹${agentFuel}
+                  </div>
                 </div>
               </div>
 
               <!-- Distance & Rate Details -->
-              <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
+              <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80" onclick="selectAgentFromRoster('${unit.id}')">
                 <span class="text-slate-200 font-mono font-black">🚗 ${unit.distanceKm} km</span>
-                <span class="text-slate-400 font-mono text-[11px]">(@ ₹${fuelRatePerKm.toFixed(2)}/km)</span>
+                <span class="text-emerald-400 font-mono text-[11px]">⚡ ${unit.mileageKmpl} km/L (₹${rate.toFixed(2)}/km)</span>
                 <span class="text-slate-400 font-mono text-[11px]">${unit.duration}</span>
               </div>
 
-              <div class="text-[11px] text-blue-300 font-medium truncate">
+              <div class="text-[11px] text-blue-300 font-medium truncate" onclick="selectAgentFromRoster('${unit.id}')">
                 📍 ${unit.lastLocation}
               </div>
             </div>
@@ -716,6 +848,122 @@
       onTimelineSliderChange(playbackProgress);
     }
 
+    // =========================================================================
+    // VEHICLE CONFIGURATION MODAL LOGIC
+    // =========================================================================
+    function openVehicleModal(agentId) {
+      editingAgentId = agentId;
+      const unitsForDate = multiDayFleetDatabase[selectedDate] || [];
+      const unit = unitsForDate.find(u => u.id === agentId) || unitsForDate[0];
+      if (!unit) return;
+
+      document.getElementById('modalAgentName').innerText = `Customise: ${unit.name}`;
+      document.getElementById('modalVehicleName').value = unit.vehicleName || "";
+      document.getElementById('modalMileage').value = unit.mileageKmpl || 50;
+      document.getElementById('modalFuelPrice').value = unit.fuelPrice || 98.50;
+      document.getElementById('modalWearTear').value = unit.wearTear || 0.75;
+      document.getElementById('modalPresetSelect').value = "CUSTOM";
+
+      calculateModalEffectiveRate();
+      document.getElementById('vehicleConfigModal').classList.remove('hidden');
+    }
+
+    function closeVehicleModal() {
+      document.getElementById('vehicleConfigModal').classList.add('hidden');
+    }
+
+    function calculateModalEffectiveRate() {
+      const mileage = parseFloat(document.getElementById('modalMileage').value) || 50;
+      const price = parseFloat(document.getElementById('modalFuelPrice').value) || 98.50;
+      const wear = parseFloat(document.getElementById('modalWearTear').value) || 0.75;
+      const rate = (price / mileage) + wear;
+      document.getElementById('modalEffectiveRate').value = `₹${rate.toFixed(2)} / km`;
+    }
+
+    function applyVehiclePreset(preset) {
+      const vName = document.getElementById('modalVehicleName');
+      const vMil = document.getElementById('modalMileage');
+      const vPrice = document.getElementById('modalFuelPrice');
+      const vWear = document.getElementById('modalWearTear');
+
+      switch(preset) {
+        case 'SPLENDOR':
+          vName.value = "Hero Splendor Plus (100cc)";
+          vMil.value = "55.0";
+          vPrice.value = "98.50";
+          vWear.value = "0.75";
+          break;
+        case 'ACTIVA':
+          vName.value = "Honda Activa 6G (110cc)";
+          vMil.value = "42.0";
+          vPrice.value = "98.50";
+          vWear.value = "0.80";
+          break;
+        case 'PULSAR':
+          vName.value = "Bajaj Pulsar 150 (150cc)";
+          vMil.value = "45.0";
+          vPrice.value = "98.50";
+          vWear.value = "0.75";
+          break;
+        case 'SWIFT':
+          vName.value = "Maruti Swift Dzire (Petrol)";
+          vMil.value = "18.0";
+          vPrice.value = "98.50";
+          vWear.value = "1.50";
+          break;
+        case 'BOLERO':
+          vName.value = "Mahindra Bolero (Diesel)";
+          vMil.value = "13.0";
+          vPrice.value = "89.20";
+          vWear.value = "1.80";
+          break;
+        case 'EV_SCOOTER':
+          vName.value = "Ather / Ola EV Scooter";
+          vMil.value = "80.0";
+          vPrice.value = "4.50"; // Cost per unit kWh
+          vWear.value = "1.00";
+          break;
+      }
+      calculateModalEffectiveRate();
+    }
+
+    function saveVehicleModal() {
+      if (!editingAgentId) return;
+      const vName = document.getElementById('modalVehicleName').value;
+      const vMil = parseFloat(document.getElementById('modalMileage').value) || 50;
+      const vPrice = parseFloat(document.getElementById('modalFuelPrice').value) || 98.50;
+      const vWear = parseFloat(document.getElementById('modalWearTear').value) || 0.75;
+
+      const newConfig = {
+        vehicleName: vName,
+        mileageKmpl: vMil,
+        fuelPrice: vPrice,
+        wearTear: vWear
+      };
+
+      // Apply across all dates for this agent
+      Object.keys(multiDayFleetDatabase).forEach(date => {
+        multiDayFleetDatabase[date].forEach(unit => {
+          if (unit.id === editingAgentId) {
+            Object.assign(unit, newConfig);
+          }
+        });
+      });
+
+      // Save to localStorage
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem('fieldpulse_vehicle_configs') || '{}'); } catch(e) {}
+      saved[editingAgentId] = newConfig;
+      localStorage.setItem('fieldpulse_vehicle_configs', JSON.stringify(saved));
+
+      closeVehicleModal();
+      renderDashboard();
+      alert(`✓ Vehicle & Mileage profile saved for agent. Effective rate: ${document.getElementById('modalEffectiveRate').value}`);
+    }
+
+    // =========================================================================
+    // TIMELINE SCRUBBER & PLAYBACK CONTROLS
+    // =========================================================================
     function onTimelineSliderChange(val) {
       playbackProgress = parseInt(val, 10);
       const hrs = 8 + Math.floor((playbackProgress / 100) * 10);
@@ -765,6 +1013,7 @@
       const filtered = unitsForDate.filter(u => 
         u.name.toLowerCase().includes(q) || 
         u.email.toLowerCase().includes(q) || 
+        (u.vehicleName && u.vehicleName.toLowerCase().includes(q)) ||
         u.lastLocation.toLowerCase().includes(q)
       );
       renderSidebar(filtered);
@@ -780,32 +1029,40 @@
       const unitsForDate = multiDayFleetDatabase[selectedDate] || [];
       const data = {
         company: "InnBuilt Industrial / Dhanpurna",
-        reportType: "Daily Distance & Fuel Audit",
+        reportType: "Custom Vehicle & Mileage Fuel Audit",
         date: selectedDate,
-        fuelRateApplied: `₹${fuelRatePerKm.toFixed(2)}/km`,
         totalDistanceKm: unitsForDate.reduce((sum, u) => sum + u.distanceKm, 0).toFixed(1),
-        totalFuelPayable: `₹${unitsForDate.reduce((sum, u) => sum + (u.distanceKm * fuelRatePerKm), 0).toFixed(2)}`,
-        agents: unitsForDate.map(u => ({
-          name: u.name,
-          email: u.email,
-          distanceKm: u.distanceKm,
-          fuelBillPayable: `₹${(u.distanceKm * fuelRatePerKm).toFixed(2)}`,
-          duration: u.duration,
-          checkpointsVisited: u.timeline ? u.timeline.length : 0
-        }))
+        totalFuelPayable: `₹${unitsForDate.reduce((sum, u) => sum + (u.distanceKm * getUnitRatePerKm(u)), 0).toFixed(2)}`,
+        agents: unitsForDate.map(u => {
+          const rate = getUnitRatePerKm(u);
+          return {
+            name: u.name,
+            email: u.email,
+            vehicle: u.vehicleName,
+            mileageKmpl: `${u.mileageKmpl} km/L`,
+            fuelPricePerLitre: `₹${u.fuelPrice || 98.50}`,
+            wearTearAllowance: `₹${u.wearTear || 0.75}/km`,
+            appliedRatePerKm: `₹${rate.toFixed(2)}/km`,
+            distanceKm: u.distanceKm,
+            fuelConsumedLiters: `${(u.distanceKm / (u.mileageKmpl || 50)).toFixed(2)} Litres`,
+            fuelBillPayable: `₹${(u.distanceKm * rate).toFixed(2)}`,
+            duration: u.duration,
+            checkpointsVisited: u.timeline ? u.timeline.length : 0
+          };
+        })
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Fuel_Reimbursement_Report_${selectedDate}.json`;
+      a.download = `Custom_Vehicle_Fuel_Report_${selectedDate}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
 
     function exportFuelVoucherReport() {
       exportMasterFleetReport();
-      alert("✓ Official Fuel Reimbursement Voucher downloaded (CSV/JSON ready for Accounts Payroll).");
+      alert("✓ Official Vehicle & Mileage Fuel Reimbursement Voucher downloaded (CSV/JSON ready for Accounts Payroll).");
     }
   </script>
 </body>
