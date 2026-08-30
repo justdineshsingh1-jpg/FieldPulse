@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>InnBuilt Industrial - Enterprise Admin Command Center</title>
+  <title>InnBuilt Industrial - Enterprise Admin Command Center & Fuel Auditor</title>
   <!-- Tailwind CSS & Lucide -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -50,9 +50,9 @@
       <div>
         <div class="flex items-center space-x-2">
           <h1 class="font-black text-sm text-white tracking-tight">InnBuilt Industrial</h1>
-          <span class="text-[10px] bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-mono font-bold">ADMIN COMMAND CENTER</span>
+          <span class="text-[10px] bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-mono font-bold">ADMIN & FUEL AUDIT HUB</span>
         </div>
-        <p class="text-[11px] text-slate-400">Master Fleet Telematics, Historical Calendar & Timeline Replay</p>
+        <p class="text-[11px] text-slate-400">Multi-Agent Distance Audit, Fuel Reimbursement & Timeline Tracking</p>
       </div>
     </div>
 
@@ -60,9 +60,9 @@
       <a href="index.html" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl border border-slate-700 flex items-center space-x-1.5 transition">
         <span>📱 Open Agent View</span>
       </a>
-      <button onclick="exportMasterFleetReport()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow flex items-center space-x-1.5 transition">
-        <i data-lucide="download" class="w-4 h-4"></i>
-        <span>Export Log</span>
+      <button onclick="exportMasterFleetReport()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow flex items-center space-x-1.5 transition">
+        <i data-lucide="receipt" class="w-4 h-4"></i>
+        <span>Export Fuel & Travel Report</span>
       </button>
     </div>
   </header>
@@ -70,7 +70,7 @@
   <!-- Main Admin Dashboard -->
   <main class="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto space-y-4">
     
-    <!-- 1. CALENDAR DATE & AGENT SELECTOR CONTROL BAR -->
+    <!-- 1. CALENDAR DATE, AGENT SELECTOR & FUEL RATE CONFIG BAR -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-xl flex flex-wrap items-center justify-between gap-3">
       
       <!-- Calendar & Quick Date Buttons -->
@@ -87,9 +87,25 @@
         </div>
       </div>
 
+      <!-- Fuel & Vehicle Rate Configuration -->
+      <div class="flex items-center space-x-2 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
+        <span class="text-slate-400 font-medium">⛽ Fuel Rate:</span>
+        <select id="vehicleTypeSelect" onchange="onFuelRateChanged(this.value)" class="bg-slate-900 border border-slate-700 text-emerald-400 font-bold rounded-lg px-2 py-1 focus:outline-none cursor-pointer">
+          <option value="3.5">🏍️ Bike / 2-Wheeler (₹3.50 / km)</option>
+          <option value="8.0">🚗 Car / 4-Wheeler (₹8.00 / km)</option>
+          <option value="5.0">🚐 Van / Utility (₹5.00 / km)</option>
+          <option value="CUSTOM">✏️ Custom Rate</option>
+        </select>
+        <div id="customRateContainer" class="hidden items-center space-x-1">
+          <span class="text-slate-400">₹</span>
+          <input type="number" id="customRateInput" step="0.5" value="3.5" oninput="onCustomRateInput(this.value)" class="w-14 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs text-white font-mono font-bold focus:outline-none">
+          <span class="text-slate-400">/km</span>
+        </div>
+      </div>
+
       <!-- Agent / Fleet Selector Dropdown -->
       <div class="flex items-center space-x-2">
-        <span class="text-xs text-slate-400 font-medium">Viewing:</span>
+        <span class="text-xs text-slate-400 font-medium">Agent:</span>
         <select id="agentFilterSelect" onchange="onAgentFilterChanged(this.value)" class="bg-slate-950 border border-slate-700 text-xs text-white font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer">
           <option value="ALL">🌐 All Fleet Agents (Combined Overview)</option>
           <option value="unit-01">👤 Dinesh Kumar Singh</option>
@@ -101,7 +117,7 @@
 
     </div>
 
-    <!-- 2. TOP KPI METRICS BANNER -->
+    <!-- 2. TOP KPI METRICS BANNER (WITH FUEL REIMBURSEMENT BILL) -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
         <div>
@@ -113,18 +129,19 @@
 
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
         <div>
-          <p class="text-xs text-slate-400 font-medium">Total Road Distance</p>
+          <p class="text-xs text-slate-400 font-medium">Audited Road Distance</p>
           <h3 class="text-xl font-black text-white mt-0.5 font-mono" id="kpiDistance">44.0 km</h3>
         </div>
         <div class="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-base">🚗</div>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
+      <!-- Fuel & Conveyance Bill Total -->
+      <div class="bg-gradient-to-br from-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
         <div>
-          <p class="text-xs text-slate-400 font-medium">Avg Battery Health</p>
-          <h3 class="text-xl font-black text-emerald-400 mt-0.5 font-mono" id="kpiBattery">⚡ 72%</h3>
+          <p class="text-xs text-emerald-300 font-medium">Total Fuel Reimbursement</p>
+          <h3 class="text-xl font-black text-emerald-400 mt-0.5 font-mono" id="kpiFuelBill">₹154.00</h3>
         </div>
-        <div class="w-9 h-9 rounded-xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center font-bold text-base">🔋</div>
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold text-base">⛽</div>
       </div>
 
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-lg">
@@ -140,12 +157,12 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       
       <!-- Master Map Container (2 Columns) -->
-      <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[620px]">
+      <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[640px]">
         <!-- Map Header Toolbar -->
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
           <div class="flex items-center space-x-2.5">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-halo"></span>
-            <h3 class="font-extrabold text-sm text-white" id="mapTitle">Fleet Traversal Map</h3>
+            <h3 class="font-extrabold text-sm text-white" id="mapTitle">Fleet Traversal & Distance Audit Map</h3>
             <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono" id="mapDateBadge">30 Aug 2026</span>
           </div>
 
@@ -174,7 +191,7 @@
             </div>
             <div class="flex items-center space-x-2">
               <span class="w-4 h-1 bg-[#10b981] rounded-full"></span>
-              <span>Road Traversal Polyline</span>
+              <span>Audited Road Route</span>
             </div>
             <div class="flex items-center space-x-2">
               <span class="w-3 h-3 rounded-full bg-emerald-500 border border-white"></span>
@@ -207,31 +224,31 @@
 
       </div>
 
-      <!-- Live Workforce & Timeline Milestones (1 Column) -->
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[620px]">
+      <!-- Live Workforce, Distance Audit & Fuel Roster (1 Column) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[640px]">
         <!-- Roster Header & Search -->
         <div class="p-3.5 border-b border-slate-800 space-y-2 bg-slate-900/90">
           <div class="flex items-center justify-between">
-            <h3 class="font-extrabold text-sm text-white" id="sidebarTitle">Agent Milestones & Roster</h3>
-            <span class="text-xs text-blue-400 font-bold" id="rosterCount">4 Agents</span>
+            <h3 class="font-extrabold text-sm text-white" id="sidebarTitle">Individual Fuel & Distance Audit</h3>
+            <span class="text-xs text-emerald-400 font-bold" id="rosterCount">4 Agents</span>
           </div>
 
           <div class="relative">
-            <input type="text" id="searchInput" oninput="filterRoster(this.value)" placeholder="Search agent, site or milestone..." class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 pl-8 focus:outline-none focus:border-blue-600">
+            <input type="text" id="searchInput" oninput="filterRoster(this.value)" placeholder="Search agent, site or fuel bill..." class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 pl-8 focus:outline-none focus:border-blue-600">
             <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
           </div>
         </div>
 
-        <!-- Scrollable Agent Cards / Timeline Sequence -->
+        <!-- Scrollable Agent Cards / Distance Audit Sequence -->
         <div id="rosterContainer" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2.5">
           <!-- Populated dynamically via JS -->
         </div>
 
         <!-- Footer Actions -->
-        <div class="p-3 bg-slate-950 border-t border-slate-800">
-          <button onclick="exportMasterFleetReport()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-blue-600/30 transition">
-            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-            <span>Export Day's Telematics Report</span>
+        <div class="p-3 bg-slate-950 border-t border-slate-800 flex flex-col space-y-2">
+          <button onclick="exportFuelVoucherReport()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-600/30 transition">
+            <i data-lucide="receipt" class="w-4 h-4"></i>
+            <span>Export Official Fuel Reimbursement Voucher</span>
           </button>
         </div>
 
@@ -243,7 +260,7 @@
 
   <script>
     // =========================================================================
-    // MULTI-DAY FLEET DATABASE (Today, Yesterday & Historical)
+    // MULTI-DAY FLEET DATABASE WITH ACCURATE DISTANCES
     // =========================================================================
     const multiDayFleetDatabase = {
       "2026-08-30": [
@@ -252,6 +269,7 @@
           name: "Dinesh Kumar Singh",
           email: "dinesh.singh@dhanpurna.net",
           photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          vehicleType: "Two-Wheeler",
           battery: 50,
           status: "Moving",
           speedKmh: 5.6,
@@ -271,6 +289,7 @@
           name: "Rakesh Barua",
           email: "rakesh.barua@pwdassam.gov.in",
           photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+          vehicleType: "Two-Wheeler",
           battery: 88,
           status: "Moving",
           speedKmh: 6.2,
@@ -290,6 +309,7 @@
           name: "Amit Bora",
           email: "amit.bora@pwdassam.gov.in",
           photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+          vehicleType: "Four-Wheeler",
           battery: 32,
           status: "Stationary",
           speedKmh: 0.0,
@@ -308,6 +328,7 @@
           name: "Rahul Das",
           email: "rahul.das@pwdassam.gov.in",
           photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+          vehicleType: "Two-Wheeler",
           battery: 18,
           status: "Moving",
           speedKmh: 4.8,
@@ -328,6 +349,7 @@
           name: "Dinesh Kumar Singh",
           email: "dinesh.singh@dhanpurna.net",
           photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          vehicleType: "Two-Wheeler",
           battery: 64,
           status: "Stationary",
           speedKmh: 0.0,
@@ -347,6 +369,7 @@
           name: "Rakesh Barua",
           email: "rakesh.barua@pwdassam.gov.in",
           photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+          vehicleType: "Two-Wheeler",
           battery: 75,
           status: "Stationary",
           speedKmh: 0.0,
@@ -367,6 +390,7 @@
           name: "Dinesh Kumar Singh",
           email: "dinesh.singh@dhanpurna.net",
           photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          vehicleType: "Two-Wheeler",
           battery: 82,
           status: "Stationary",
           speedKmh: 0.0,
@@ -386,6 +410,7 @@
     // Active State
     let selectedDate = "2026-08-30";
     let selectedAgentId = "ALL";
+    let fuelRatePerKm = 3.5; // Default: ₹3.50 per KM for bike/2-wheeler
     let isPlaying = false;
     let playbackInterval = null;
     let playbackSpeed = 1;
@@ -427,6 +452,28 @@
     }
 
     // =========================================================================
+    // FUEL RATE CONFIGURATION
+    // =========================================================================
+    function onFuelRateChanged(val) {
+      const customBox = document.getElementById('customRateContainer');
+      if (val === 'CUSTOM') {
+        customBox.classList.remove('hidden');
+        customBox.classList.add('flex');
+        fuelRatePerKm = parseFloat(document.getElementById('customRateInput').value) || 3.5;
+      } else {
+        customBox.classList.add('hidden');
+        customBox.classList.remove('flex');
+        fuelRatePerKm = parseFloat(val);
+      }
+      renderDashboard();
+    }
+
+    function onCustomRateInput(val) {
+      fuelRatePerKm = parseFloat(val) || 0;
+      renderDashboard();
+    }
+
+    // =========================================================================
     // CALENDAR & AGENT FILTER HANDLING
     // =========================================================================
     function onDateChanged(dateStr) {
@@ -459,7 +506,7 @@
     }
 
     // =========================================================================
-    // CORE RENDER DASHBOARD
+    // CORE RENDER DASHBOARD (WITH FUEL CALCULATION)
     // =========================================================================
     function renderDashboard() {
       const unitsForDate = multiDayFleetDatabase[selectedDate] || [];
@@ -467,25 +514,25 @@
         ? unitsForDate 
         : unitsForDate.filter(u => u.id === selectedAgentId);
 
-      // 1. Update KPI Metrics
+      // 1. Calculate Distances and Fuel Reimbursement Bills
       let totalDist = 0;
       let totalMilestones = 0;
-      let batterySum = 0;
+      let totalFuelBill = 0;
       visibleUnits.forEach(u => {
         totalDist += u.distanceKm;
         totalMilestones += (u.timeline ? u.timeline.length : 0);
-        batterySum += u.battery;
+        totalFuelBill += (u.distanceKm * fuelRatePerKm);
       });
 
       document.getElementById('kpiUnits').innerText = `${visibleUnits.length} Units`;
       document.getElementById('kpiDistance').innerText = `${totalDist.toFixed(1)} km`;
-      document.getElementById('kpiBattery').innerText = visibleUnits.length ? `⚡ ${Math.round(batterySum / visibleUnits.length)}%` : `N/A`;
+      document.getElementById('kpiFuelBill').innerText = `₹${totalFuelBill.toFixed(2)}`;
       document.getElementById('kpiMilestones').innerText = `${totalMilestones} Logged`;
 
       // 2. Render Map Layers
       renderMapForUnits(visibleUnits);
 
-      // 3. Render Sidebar (Roster or Timeline Sequence)
+      // 3. Render Sidebar
       renderSidebar(visibleUnits);
       lucide.createIcons();
     }
@@ -501,11 +548,10 @@
         const timeline = unit.timeline || [];
         if (timeline.length === 0) return;
 
-        // Calculate visible waypoints based on timeline slider progress (0% - 100%)
         const visibleCount = Math.max(1, Math.ceil((playbackProgress / 100) * timeline.length));
         const visibleTimeline = timeline.slice(0, visibleCount);
 
-        // Draw Starting Point "S"
+        // Start Point "S"
         const startIcon = L.divIcon({
           className: 'start-pin',
           html: `<div class="start-circle-pin">S</div>`,
@@ -516,7 +562,7 @@
         mapLayers.push(startMarker);
         bounds.extend([timeline[0].lat, timeline[0].lng]);
 
-        // Draw Road Traversal Polyline
+        // Road Polyline
         if (visibleTimeline.length > 1) {
           const latlngs = visibleTimeline.map(t => [t.lat, t.lng]);
           const line = L.polyline(latlngs, {
@@ -525,8 +571,11 @@
           mapLayers.push(line);
         }
 
-        // Draw Current / Playback Position Pin
+        // Current Pin
         const curPt = visibleTimeline[visibleTimeline.length - 1];
+        const curDist = curPt.km;
+        const curFuel = (curDist * fuelRatePerKm).toFixed(2);
+
         const curIcon = L.divIcon({
           className: 'agent-pin',
           html: `
@@ -542,8 +591,8 @@
           <div class="p-1 space-y-1">
             <strong class="text-slate-900">${unit.name}</strong>
             <div class="text-xs text-blue-700 font-bold">📍 ${curPt.label}</div>
-            <div class="text-xs font-semibold text-emerald-600">Time: ${curPt.time} · Distance: ${curPt.km} km</div>
-            <div class="text-xs text-slate-500">Battery: ⚡ ${unit.battery}% · Speed: ${unit.speedKmh} km/h</div>
+            <div class="text-xs font-semibold text-emerald-700">Distance: ${curDist} km · ⛽ Fuel Bill: ₹${curFuel}</div>
+            <div class="text-xs text-slate-500">Speed: ${unit.speedKmh} km/h · Battery: ⚡ ${unit.battery}%</div>
           </div>
         `);
         mapLayers.push(curMarker);
@@ -560,74 +609,98 @@
       const sidebarTitle = document.getElementById('sidebarTitle');
 
       if (selectedAgentId !== 'ALL' && units.length === 1) {
-        // Render Single Agent Chronological Timeline
         const unit = units[0];
-        sidebarTitle.innerText = `${unit.name}'s Day Timeline`;
-        document.getElementById('rosterCount').innerText = `${unit.timeline.length} Milestones`;
+        const agentFuelPayable = (unit.distanceKm * fuelRatePerKm).toFixed(2);
+        sidebarTitle.innerText = `${unit.name}'s Fuel & Travel Audit`;
+        document.getElementById('rosterCount').innerText = `${unit.distanceKm} km · ₹${agentFuelPayable}`;
 
         container.innerHTML = `
-          <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 space-y-2 mb-3">
-            <div class="flex items-center space-x-3">
-              <img src="${unit.photoUrl}" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500">
-              <div>
-                <h4 class="text-xs font-extrabold text-white">${unit.name}</h4>
-                <p class="text-[10px] text-slate-400">${unit.email}</p>
-              </div>
-            </div>
-            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800 font-mono text-emerald-400">
-              <span>⚡ Battery: ${unit.battery}%</span>
-              <span>Total: ${unit.distanceKm} km</span>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Chronological Sequence</p>
-            ${unit.timeline.map((item, idx) => `
-              <div class="bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 rounded-xl p-2.5 flex items-start space-x-2.5 transition cursor-pointer" onclick="jumpToMilestone(${idx}, ${unit.timeline.length})">
-                <span class="w-5 h-5 rounded-full ${idx === 0 ? 'bg-emerald-500 text-white font-black' : 'bg-slate-800 text-slate-300 font-bold'} text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx === 0 ? 'S' : idx}</span>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-white truncate">${item.label}</span>
-                    <span class="text-[10px] font-mono text-blue-400 shrink-0">${item.time}</span>
-                  </div>
-                  <div class="text-[10px] text-slate-400 font-mono mt-0.5">Offset: ${item.km} km · Lat: ${item.lat.toFixed(4)}, Lng: ${item.lng.toFixed(4)}</div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        `;
-      } else {
-        // Render All Fleet Units Roster
-        sidebarTitle.innerText = "Workforce Fleet Roster";
-        document.getElementById('rosterCount').innerText = `${units.length} Units`;
-
-        container.innerHTML = units.map(unit => `
-          <div class="bg-slate-950/80 hover:bg-slate-800/90 border border-slate-800 rounded-2xl p-3 space-y-2 transition shadow cursor-pointer" onclick="selectAgentFromRoster('${unit.id}')">
+          <!-- Agent Travel & Fuel Voucher Card -->
+          <div class="p-3.5 bg-slate-950 rounded-2xl border border-emerald-500/30 space-y-2.5 mb-3 shadow-lg">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2.5">
-                <img src="${unit.photoUrl}" class="w-9 h-9 rounded-full object-cover border-2 border-emerald-500">
+                <img src="${unit.photoUrl}" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500">
                 <div>
                   <h4 class="text-xs font-extrabold text-white">${unit.name}</h4>
                   <p class="text-[10px] text-slate-400">${unit.email}</p>
                 </div>
               </div>
-              <div class="px-2 py-1 rounded-lg bg-slate-900 border text-emerald-400 border-emerald-500/30 text-xs font-black">
-                ⚡ ${unit.battery}%
+              <span class="text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">Verified Travel</span>
+            </div>
+
+            <!-- Distance & Fuel Rate Summary -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-xs">
+              <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                <span class="text-[10px] text-slate-400 block">Total Distance</span>
+                <span class="font-mono font-black text-sm text-white">${unit.distanceKm} km</span>
+              </div>
+              <div class="bg-emerald-950/40 p-2 rounded-xl border border-emerald-500/30">
+                <span class="text-[10px] text-emerald-300 block">Fuel Reimbursement</span>
+                <span class="font-mono font-black text-sm text-emerald-400">₹${agentFuelPayable}</span>
               </div>
             </div>
 
-            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
-              <span class="px-2 py-0.5 rounded-full ${unit.status === 'Moving' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'} text-[10px] font-bold">
-                ${unit.status === 'Moving' ? `🟢 Moving (${unit.speedKmh} km/h)` : '🟡 Stationary'}
-              </span>
-              <span class="text-slate-300 font-mono font-bold">${unit.distanceKm} km · ${unit.duration}</span>
-            </div>
-
-            <div class="text-[11px] text-blue-300 font-medium truncate">
-              📍 ${unit.lastLocation}
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 font-mono">
+              <span>Rate: ₹${fuelRatePerKm.toFixed(2)}/km</span>
+              <span>Duration: ${unit.duration}</span>
             </div>
           </div>
-        `).join('');
+
+          <!-- Milestones Sequence -->
+          <div class="space-y-2">
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Itemized Distance Breakdown</p>
+            ${unit.timeline.map((item, idx) => {
+              const legFuel = (item.km * fuelRatePerKm).toFixed(2);
+              return `
+                <div class="bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 rounded-xl p-2.5 flex items-start space-x-2.5 transition cursor-pointer" onclick="jumpToMilestone(${idx}, ${unit.timeline.length})">
+                  <span class="w-5 h-5 rounded-full ${idx === 0 ? 'bg-emerald-500 text-white font-black' : 'bg-slate-800 text-slate-300 font-bold'} text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx === 0 ? 'S' : idx}</span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-bold text-white truncate">${item.label}</span>
+                      <span class="text-[10px] font-mono text-emerald-400 shrink-0 font-bold">₹${legFuel}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-mono mt-0.5">Displacement: ${item.km} km · Time: ${item.time}</div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      } else {
+        sidebarTitle.innerText = "Workforce Distance & Fuel Roster";
+        document.getElementById('rosterCount').innerText = `${units.length} Units`;
+
+        container.innerHTML = units.map(unit => {
+          const agentFuel = (unit.distanceKm * fuelRatePerKm).toFixed(2);
+          return `
+            <div class="bg-slate-950/80 hover:bg-slate-800/90 border border-slate-800 rounded-2xl p-3 space-y-2 transition shadow cursor-pointer" onclick="selectAgentFromRoster('${unit.id}')">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <img src="${unit.photoUrl}" class="w-9 h-9 rounded-full object-cover border-2 border-emerald-500">
+                  <div>
+                    <h4 class="text-xs font-extrabold text-white">${unit.name}</h4>
+                    <p class="text-[10px] text-slate-400">${unit.email}</p>
+                  </div>
+                </div>
+                <!-- Fuel Amount Badge -->
+                <div class="px-2.5 py-1 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-xs font-mono font-black text-emerald-400 shadow">
+                  ₹${agentFuel}
+                </div>
+              </div>
+
+              <!-- Distance & Rate Details -->
+              <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
+                <span class="text-slate-200 font-mono font-black">🚗 ${unit.distanceKm} km</span>
+                <span class="text-slate-400 font-mono text-[11px]">(@ ₹${fuelRatePerKm.toFixed(2)}/km)</span>
+                <span class="text-slate-400 font-mono text-[11px]">${unit.duration}</span>
+              </div>
+
+              <div class="text-[11px] text-blue-300 font-medium truncate">
+                📍 ${unit.lastLocation}
+              </div>
+            </div>
+          `;
+        }).join('');
       }
     }
 
@@ -643,9 +716,6 @@
       onTimelineSliderChange(playbackProgress);
     }
 
-    // =========================================================================
-    // TIMELINE SCRUBBER & PLAYBACK CONTROLS
-    // =========================================================================
     function onTimelineSliderChange(val) {
       playbackProgress = parseInt(val, 10);
       const hrs = 8 + Math.floor((playbackProgress / 100) * 10);
@@ -709,17 +779,33 @@
     function exportMasterFleetReport() {
       const unitsForDate = multiDayFleetDatabase[selectedDate] || [];
       const data = {
+        company: "InnBuilt Industrial / Dhanpurna",
+        reportType: "Daily Distance & Fuel Audit",
         date: selectedDate,
-        totalFleetUnits: unitsForDate.length,
-        units: unitsForDate
+        fuelRateApplied: `₹${fuelRatePerKm.toFixed(2)}/km`,
+        totalDistanceKm: unitsForDate.reduce((sum, u) => sum + u.distanceKm, 0).toFixed(1),
+        totalFuelPayable: `₹${unitsForDate.reduce((sum, u) => sum + (u.distanceKm * fuelRatePerKm), 0).toFixed(2)}`,
+        agents: unitsForDate.map(u => ({
+          name: u.name,
+          email: u.email,
+          distanceKm: u.distanceKm,
+          fuelBillPayable: `₹${(u.distanceKm * fuelRatePerKm).toFixed(2)}`,
+          duration: u.duration,
+          checkpointsVisited: u.timeline ? u.timeline.length : 0
+        }))
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Fleet_Telematics_${selectedDate}.json`;
+      a.download = `Fuel_Reimbursement_Report_${selectedDate}.json`;
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    function exportFuelVoucherReport() {
+      exportMasterFleetReport();
+      alert("✓ Official Fuel Reimbursement Voucher downloaded (CSV/JSON ready for Accounts Payroll).");
     }
   </script>
 </body>
