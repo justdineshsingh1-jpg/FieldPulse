@@ -596,6 +596,11 @@
           .then(() => console.log("✓ PWA Service Worker Registered"))
           .catch((err) => console.log("SW registration standby:", err.message));
       }
+
+      // Check if direct Admin link was opened (e.g. #admin or ?view=admin)
+      if (window.location.hash === '#admin' || window.location.search.includes('view=admin')) {
+        setTimeout(() => switchAppView('admin'), 200);
+      }
     });
 
     // Screen Wake Lock API (Keeps GPS Active during Field Work)
