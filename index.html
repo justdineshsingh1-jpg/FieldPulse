@@ -1143,6 +1143,14 @@
       const startTime = Date.now() - (state.secondsElapsed * 1000);
       localStorage.setItem(STORAGE_KEY_TIMER, JSON.stringify({ isTrackingActive: true, startTime }));
 
+      // Check for Night Shift (10 PM ➔ 6 AM)
+      const currentHour = new Date().getHours();
+      const isNightShift = (currentHour >= 20 || currentHour < 7);
+      const shiftLabel = isNightShift ? "🌙 Night Shift (10 PM ➔ 6 AM · Present)" : "☀️ Day Duty (Present)";
+      
+      const movStatus = document.getElementById('movementStatusText');
+      if (movStatus) movStatus.innerText = `🟢 Tracking Active · ${shiftLabel}`;
+
       state.timerInterval = setInterval(() => {
         state.secondsElapsed++;
         const hrs = String(Math.floor(state.secondsElapsed / 3600)).padStart(2, '0');

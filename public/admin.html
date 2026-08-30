@@ -434,15 +434,19 @@
           battery: 50,
           status: "Moving",
           speedKmh: 5.6,
-          distanceKm: 8.4,
-          duration: "04:30:00",
-          lastLocation: "Active Road Transit (Riverfront)",
+          distanceKm: 16.4,
+          duration: "08:00:00",
+          shiftType: "🌙 Night Shift (10:00 PM ➔ 06:00 AM Next Day)",
+          attendanceStatus: "🟢 PRESENT (Night Duty Active)",
+          checkInTime: "10:00 PM (29 Aug)",
+          checkOutTime: "06:00 AM (30 Aug)",
+          lastLocation: "Brahmaputra Bridge Pier Foundation (~3km)",
           lat: 26.1885, lng: 91.7440,
           timeline: [
-            { time: "09:00 AM", label: "Starting Point (Panbazar Gate)", lat: 26.1852, lng: 91.7380, km: 0.0 },
-            { time: "10:15 AM", label: "Riverfront Inspection Site A", lat: 26.1865, lng: 91.7405, km: 2.8 },
-            { time: "12:00 PM", label: "Brahmaputra Heritage Jetty (~3km)", lat: 26.1880, lng: 91.7428, km: 5.6 },
-            { time: "02:30 PM", label: "Current Point: Riverfront Sector 2", lat: 26.1885, lng: 91.7440, km: 8.4 }
+            { time: "10:00 PM (Night Check-in)", label: "Starting Point: Panbazar Night Depot (S)", lat: 26.1852, lng: 91.7380, km: 0.0 },
+            { time: "12:30 AM (Midnight Patrol)", label: "Riverfront Concrete Yard Site A (~3km)", lat: 26.1865, lng: 91.7405, km: 5.2 },
+            { time: "03:15 AM (Night Inspection)", label: "Heritage Jetty Checkpoint (~3km)", lat: 26.1880, lng: 91.7428, km: 10.8 },
+            { time: "06:00 AM (Shift Check-out)", label: "Brahmaputra Bridge Pier Foundation (~3km)", lat: 26.1885, lng: 91.7440, km: 16.4 }
           ]
         },
         {
@@ -460,6 +464,10 @@
           speedKmh: 6.2,
           distanceKm: 14.2,
           duration: "05:10:00",
+          shiftType: "☀️ Day Shift",
+          attendanceStatus: "🟢 PRESENT (Day Duty)",
+          checkInTime: "08:30 AM (30 Aug)",
+          checkOutTime: "06:00 PM (30 Aug)",
           lastLocation: "Bridge Pier Foundation P-4 (~3km Milestone)",
           lat: 26.1920, lng: 91.7180,
           timeline: [
@@ -484,6 +492,10 @@
           speedKmh: 0.0,
           distanceKm: 9.8,
           duration: "03:45:00",
+          shiftType: "☀️ Day Shift",
+          attendanceStatus: "🟢 PRESENT (Day Duty)",
+          checkInTime: "09:15 AM (30 Aug)",
+          checkOutTime: "06:00 PM (30 Aug)",
           lastLocation: "Material Testing Lab (Idle on Site)",
           lat: 26.1820, lng: 91.7510,
           timeline: [
@@ -505,14 +517,19 @@
           battery: 18,
           status: "Moving",
           speedKmh: 4.8,
-          distanceKm: 11.6,
-          duration: "04:15:00",
+          distanceKm: 14.8,
+          duration: "08:00:00",
+          shiftType: "🌙 Night Shift (10:00 PM ➔ 06:00 AM Next Day)",
+          attendanceStatus: "🟢 PRESENT (Night Duty Active)",
+          checkInTime: "10:00 PM (29 Aug)",
+          checkOutTime: "06:00 AM (30 Aug)",
           lastLocation: "Fancy Bazar Market Trenching (~3km)",
           lat: 26.1840, lng: 91.7350,
           timeline: [
-            { time: "08:45 AM", label: "Fancy Bazar Entry Hub (Start)", lat: 26.1800, lng: 91.7280, km: 0.0 },
-            { time: "10:30 AM", label: "Drainage Pipeline Sector 1 (~3km)", lat: 26.1820, lng: 91.7310, km: 3.0 },
-            { time: "01:00 PM", label: "Market Trenching Checkpoint (~3km)", lat: 26.1840, lng: 91.7350, km: 11.6 }
+            { time: "10:00 PM (Night Start)", label: "Fancy Bazar Entry Hub (Start)", lat: 26.1800, lng: 91.7280, km: 0.0 },
+            { time: "01:15 AM (Night Trenching)", label: "Drainage Pipeline Sector 1 (~3km)", lat: 26.1820, lng: 91.7310, km: 4.8 },
+            { time: "04:30 AM (Patrol Checkpoint)", label: "Market Trenching Checkpoint (~3km)", lat: 26.1840, lng: 91.7350, km: 10.2 },
+            { time: "06:00 AM (Morning Shift End)", label: "Dispur Pipeline Terminal (~3km)", lat: 26.1850, lng: 91.7360, km: 14.8 }
           ]
         }
       ],
@@ -850,6 +867,16 @@
               </button>
             </div>
 
+            <!-- Shift & Attendance Status Banner -->
+            <div class="p-2 bg-slate-900/90 rounded-xl border border-slate-800 text-[11px] flex items-center justify-between">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-emerald-400 font-extrabold">${unit.attendanceStatus || '🟢 PRESENT'}</span>
+              </div>
+              <div class="text-[10px] text-indigo-300 font-bold font-mono">
+                ${unit.shiftType || '☀️ Day Shift'}
+              </div>
+            </div>
+
             <!-- Vehicle Details Banner -->
             <div class="p-2 bg-slate-900/90 rounded-xl border border-slate-800 text-[11px] space-y-1">
               <div class="flex items-center justify-between text-white font-bold">
@@ -926,6 +953,12 @@
                     ₹${agentFuel}
                   </div>
                 </div>
+              </div>
+
+              <!-- Attendance Status & Shift Type -->
+              <div class="flex items-center justify-between text-[11px] px-1 bg-slate-900/60 p-1.5 rounded-lg" onclick="selectAgentFromRoster('${unit.id}')">
+                <span class="text-emerald-400 font-bold">${unit.attendanceStatus || '🟢 PRESENT'}</span>
+                <span class="text-indigo-300 font-bold text-[10px]">${unit.shiftType || '☀️ Day Shift'}</span>
               </div>
 
               <!-- Distance & Rate Details -->
@@ -1144,6 +1177,10 @@
           return {
             name: u.name,
             email: u.email,
+            attendanceStatus: u.attendanceStatus || "🟢 PRESENT",
+            shiftType: u.shiftType || "☀️ Regular Shift",
+            checkIn: u.checkInTime || "N/A",
+            checkOut: u.checkOutTime || "N/A",
             vehicle: u.vehicleName,
             mileageKmpl: `${u.mileageKmpl} km/L`,
             fuelPricePerLitre: `₹${u.fuelPrice || 98.50}`,
