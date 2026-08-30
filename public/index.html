@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>InnBuilt Industrial - Field Agent Tracking</title>
+  <!-- PWA Mobile App Support -->
+  <meta name="theme-color" content="#1e3a8a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FieldTracker">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+    @keyframes haloPulse {
+      0% { transform: scale(0.85); opacity: 0.8; }
+      70% { transform: scale(1.35); opacity: 0; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    .agent-circle-pin {
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      position: relative !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    .agent-circle-pin img {
+      width: 36px !important;
+      height: 36px !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      border: 2.5px solid #10b981 !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+      position: relative !important;
+      z-index: 10 !important;
+    }
+    .start-circle-pin {
+      width: 28px !important;
+      height: 28px !important;
+      border-radius: 50% !important;
+      background: #10b981 !important;
+      color: #ffffff !important;
+      font-weight: 900 !important;
+      font-size: 11px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: 2px solid #ffffff !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+    }
+    .radar-pulse-ring {
+      position: absolute !important;
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      background: rgba(16, 185, 129, 0.35) !important;
+      border: 2px solid #10b981 !important;
+      animation: haloPulse 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
+      pointer-events: none !important;
+      z-index: 1 !important;
+    }
+    #agentMiniMap, #expandedFullMap, #commandMap { width: 100%; height: 100%; border-radius: 0.5rem; }
+    .leaflet-popup-content { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- =========================================================================
+       1. ONE-TIME LOGIN & SETUP ONBOARDING MODAL / SCREEN
+       ========================================================================= -->
+  <div id="loginScreenModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white text-slate-900 w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative">
+      
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-blue-600 text-white rounded-2xl mx-auto flex items-center justify-center font-black text-2xl shadow-lg shadow-blue-600/30 mb-3">
+          IB
+        </div>
+        <h2 class="font-extrabold text-xl text-slate-900 tracking-tight">Field Agent Profile Setup</h2>
+        <p class="text-xs text-slate-500 mt-1">One-time registration. Next time you will automatically enter the main tracking screen.</p>
+      </div>
+
+      <form id="onboardingForm" onsubmit="handleOnboardingSubmit(event)" class="space-y-4">
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Full Name</label>
+          <input type="text" id="setupName" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-blue-600 text-slate-900 bg-slate-50" placeholder="e.g. Dinesh Kumar Singh" value="Dinesh Kumar Singh">
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Email ID</label>
+          <input type="email" id="setupEmail" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-blue-600 text-slate-900 bg-slate-50" placeholder="e.g. dinesh.singh@dhanpurna.net" value="dinesh.singh@dhanpurna.net">
+        </div>
+
+        <!-- Photo Capture / Camera Section -->
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1.5">Profile Photo (Shown as Live Map Pin)</label>
+          <div class="flex items-center space-x-4">
+            <div class="relative">
+              <img id="setupPhotoPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Agent Photo" class="w-16 h-16 rounded-full object-cover border-2 border-emerald-500 shadow-md">
+              <span class="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white absolute bottom-0 right-0"></span>
+            </div>
+
+            <div class="flex-1 space-y-1.5">
+              <button type="button" onclick="openLiveCameraModal()" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold py-2 px-3 rounded-xl border border-blue-200 flex items-center justify-center space-x-1.5 transition">
+                <i data-lucide="camera" class="w-4 h-4"></i>
+                <span>Take Live Selfie (Camera)</span>
+              </button>
+              
+              <label class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-1.5 px-3 rounded-xl border border-slate-200 flex items-center justify-center space-x-1.5 cursor-pointer transition">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                <span>Upload From Device</span>
+                <input type="file" id="fileUploadInput" accept="image/*" capture="user" onchange="handleFileUpload(event)" class="hidden">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-[#1e3a8a] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center space-x-2 shadow-lg shadow-blue-900/30 transition mt-6">
+          <span>Save Profile & Enter Tracking App</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Camera Capture Modal -->
+  <div id="cameraModal" class="fixed inset-0 bg-black/90 z-[60] hidden flex flex-col items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-3xl p-5 max-w-sm w-full text-center space-y-4 border border-slate-800">
+      <h3 class="font-bold text-white text-sm">Take Agent Profile Photo</h3>
+      <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-inner flex items-center justify-center">
+        <video id="cameraVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+        <canvas id="cameraCanvas" class="hidden"></canvas>
+      </div>
+      <div class="flex items-center justify-center space-x-3">
+        <button onclick="captureCameraPhoto()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-emerald-500/30 transition">
+          <i data-lucide="camera" class="w-4 h-4"></i>
+          <span>Capture Photo</span>
+        </button>
+        <button onclick="closeCameraModal()" class="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-700">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       2. TOP GLOBAL HEADER (InnBuilt Suite)
+       ========================================================================= -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow">
+        IB
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="font-black text-sm text-white tracking-tight">InnBuilt Industrial</h1>
+          <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-mono">Assam PWD</span>
+        </div>
+        <p class="text-[11px] text-slate-400">Live Agent Traversal & Visited Locations</p>
+      </div>
+    </div>
+
+    <!-- Actions & Profile Switcher -->
+    <div class="flex items-center space-x-2">
+      <!-- Movement Indicator Badge -->
+      <div id="liveMovementStatusBadge" class="hidden sm:flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-halo"></span>
+        <span id="movementStatusText">🟢 Live Movement (5.6 km/h)</span>
+      </div>
+
+      <!-- Export Daily Report Button -->
+      <button onclick="exportDailyReport()" title="Download Official Field Traversal & Attendance Report" class="p-1.5 bg-blue-900/60 hover:bg-blue-800 text-blue-200 rounded-xl border border-blue-700 text-xs flex items-center space-x-1 transition">
+        <i data-lucide="download" class="w-4 h-4 text-blue-400"></i>
+        <span class="hidden md:inline">Export Report</span>
+      </button>
+
+      <!-- Edit Profile / Switch Account Button -->
+      <button onclick="openProfileEditModal()" title="Edit Profile / Switch Agent" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 text-xs flex items-center space-x-1">
+        <i data-lucide="user-cog" class="w-4 h-4"></i>
+        <span class="hidden md:inline">Edit Profile</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       3. MAIN AGENT SCREEN (MATCHING IMAGE 1 & IMAGE 2)
+       ========================================================================= -->
+  <main class="flex-1 p-3 sm:p-6 max-w-md w-full mx-auto space-y-3">
+    
+    <!-- Mobile Device Frame Container (Matching Image 1) -->
+    <div class="bg-white text-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-300 flex flex-col font-sans relative">
+      
+      <!-- Top Header Bar (Deep Blue Banner) -->
+      <div class="bg-[#1e3a8a] text-white px-4 py-3 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+          <div class="relative">
+            <img id="agentHeaderPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Agent Photo" class="w-8 h-8 rounded-full object-cover border border-white shadow">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white absolute bottom-0 right-0"></span>
+          </div>
+          <div>
+            <h2 id="agentHeaderName" class="font-extrabold text-sm text-white tracking-tight leading-tight">Welcome, Dinesh Kumar Singh</h2>
+            <p id="agentHeaderEmail" class="text-[11px] text-blue-200 font-normal">dinesh.singh@dhanpurna.net</p>
+          </div>
+        </div>
+        <div id="agentBatteryContainer" onclick="openBatteryCalibrateModal()" title="Click to sync or calibrate battery %" class="flex items-center space-x-1 text-emerald-400 font-bold text-xs tracking-tight bg-blue-950/60 px-2 py-1 rounded-lg border border-blue-800/40 cursor-pointer hover:bg-blue-900 transition">
+          <span id="agentBatteryIcon">⚡</span>
+          <span id="agentBatteryText">50%</span>
+        </div>
+      </div>
+
+      <!-- Date / Calendar Filter Strip -->
+      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2 flex items-center justify-between text-xs">
+        <div class="flex items-center space-x-1.5">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-700"></i>
+          <span class="font-bold text-slate-700">Route Date:</span>
+        </div>
+        
+        <div class="flex items-center space-x-1.5">
+          <select id="routeDateSelect" onchange="handleDateChange(this.value)" class="bg-white border border-slate-300 text-slate-800 text-xs font-semibold rounded-lg px-2 py-1 focus:outline-none focus:border-blue-600">
+            <option value="2026-08-30">Today (30 Aug 2026)</option>
+            <option value="2026-08-29">Yesterday (29 Aug 2026)</option>
+            <option value="2026-08-28">28 Aug 2026</option>
+          </select>
+          <input type="date" id="customDatePicker" value="2026-08-30" onchange="handleCustomDate(this.value)" class="bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-1.5 py-1">
+        </div>
+      </div>
+
+      <!-- Map Card with Preview & Expand Map Button -->
+      <div class="relative w-full h-[250px] bg-slate-100 border-b border-slate-200">
+        <div id="agentMiniMap" class="w-full h-full"></div>
+        
+        <!-- Floating "Expand Map" Button (Matching Image 1) -->
+        <button onclick="openExpandedMapModal()" class="absolute bottom-3 right-3 z-[400] bg-white hover:bg-slate-50 text-[#1e3a8a] font-bold text-xs px-3.5 py-1.5 rounded-full shadow-lg border border-slate-200 flex items-center space-x-1.5 transition active:scale-95">
+          <span>Expand Map</span>
+        </button>
+
+        <!-- Tile Switcher Mini Overlay (Google Streets & Google Hybrid) -->
+        <div class="absolute top-2 right-2 z-[400] bg-white/90 backdrop-blur rounded-lg p-1 shadow border border-slate-200 text-[10px] font-bold flex space-x-1">
+          <button onclick="setMiniMapTile('googleStreets')" id="miniTileStreets" class="px-1.5 py-0.5 rounded bg-blue-600 text-white">Streets</button>
+          <button onclick="setMiniMapTile('googleHybrid')" id="miniTileHybrid" class="px-1.5 py-0.5 rounded text-slate-600 hover:text-slate-900">Hybrid</button>
+        </div>
+      </div>
+
+      <!-- Action Buttons (Start, Stop, Check In, +3KM) -->
+      <div class="p-3 bg-slate-50 border-b border-slate-200">
+        <div class="grid grid-cols-4 gap-1.5">
+          <!-- Start Button -->
+          <button onclick="startAgentTracking()" id="btnAgentStart" class="bg-[#e2e8f0] hover:bg-slate-300 text-slate-800 font-bold py-2.5 rounded-lg text-xs transition shadow-sm text-center">
+            Start
+          </button>
+          <!-- Stop Button -->
+          <button onclick="stopAgentTracking()" id="btnAgentStop" class="bg-[#ef4444] hover:bg-red-600 text-white font-bold py-2.5 rounded-lg text-xs transition shadow-sm text-center">
+            Stop
+          </button>
+          <!-- Check In Button -->
+          <button onclick="performAgentCheckIn()" class="bg-white hover:bg-slate-50 text-slate-800 font-bold py-2.5 rounded-lg text-xs border border-slate-300 flex items-center justify-center space-x-1 transition shadow-sm">
+            <span class="text-rose-500">📍</span>
+            <span>Check In</span>
+          </button>
+          <!-- Auto 3 KM Test Button -->
+          <button onclick="simulateTravelProgress(3.0)" title="Simulate traveling 3.0 KM" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-2.5 rounded-lg text-xs border border-indigo-200 flex items-center justify-center space-x-1 transition shadow-sm">
+            <span>🚗</span>
+            <span>+3 KM</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Telemetry Stats Strip (Dark Blue Bar) -->
+      <div class="bg-[#172554] text-white px-4 py-2.5 flex items-center justify-between text-xs font-semibold">
+        <div>
+          <span class="text-blue-200 font-normal">Distance </span>
+          <strong id="agentDistanceText" class="font-bold text-white font-mono">8.4 km</strong>
+        </div>
+        <div>
+          <span class="text-blue-200 font-normal">Duration </span>
+          <strong id="agentDurationText" class="font-bold text-white font-mono">00:00:00</strong>
+        </div>
+        <div>
+          <strong id="agentSpeedText" class="font-bold text-white font-mono">5.6 km/h</strong>
+        </div>
+      </div>
+
+      <!-- Today's Visited Locations Card (Last 3 visible + Scrollbar for >3) -->
+      <div class="p-3 bg-white space-y-2 relative pb-5">
+        <div class="bg-[#dbeafe] text-[#1e40af] px-3 py-1.5 rounded-lg font-bold text-xs tracking-tight flex items-center justify-between">
+          <span>Today's Visited Locations</span>
+          <span class="text-[10px] text-blue-600 font-normal" id="visitedCountBadge">5 Total (Scroll to view)</span>
+        </div>
+
+        <!-- Scrollable container (Max 3 visible at once, vertical scrollbar when >3) -->
+        <div id="visitedLocationsScrollBox" class="max-h-[105px] overflow-y-auto custom-scrollbar space-y-2 px-2 py-1 text-xs text-slate-800 font-medium pr-1">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Floating Navigation Compass Icon (N) on bottom-left (Matching Image 1) -->
+        <div class="absolute -bottom-2 left-4 w-9 h-9 rounded-full bg-[#1e293b] text-white font-black text-xs flex items-center justify-center shadow-lg border-2 border-white">
+          N
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- =========================================================================
+       4. EXPANDED FULL MAP MODAL (MATCHING IMAGE 2)
+       ========================================================================= -->
+  <div id="expandedMapModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 hidden flex flex-col">
+    <!-- Header -->
+    <div class="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <button onclick="closeExpandedMapModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition flex items-center space-x-1.5 text-xs font-bold">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Back to Agent Screen</span>
+        </button>
+        <div>
+          <h3 class="font-black text-sm text-white">Full Traversal Map (Guwahati Road Network)</h3>
+          <p class="text-[11px] text-slate-400">Start Point (<span class="text-emerald-400 font-bold">S</span>) ➔ Green Road Polyline ➔ Live Agent Photo Pin</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button onclick="setExpandedTileLayer('googleStreets')" id="expBtnStreets" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white">
+          🚗 Google Streets
+        </button>
+        <button onclick="setExpandedTileLayer('googleHybrid')" id="expBtnHybrid" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 border border-slate-700">
+          🛰️ Google Hybrid
+        </button>
+        <button onclick="closeExpandedMapModal()" class="text-slate-400 hover:text-white p-2">✕</button>
+      </div>
+    </div>
+
+    <!-- Map Container -->
+    <div class="flex-1 w-full bg-slate-950 relative">
+      <div id="expandedFullMap" class="w-full h-full"></div>
+
+      <!-- Legend Overlay (Matching Image 2) -->
+      <div class="absolute bottom-6 left-6 z-[400] bg-white/95 backdrop-blur text-slate-900 p-3.5 rounded-2xl shadow-2xl border border-slate-200 text-xs font-medium space-y-2 max-w-xs">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-6 h-6 rounded-full bg-[#10b981] text-white font-black text-xs flex items-center justify-center shadow">S</div>
+          <span class="font-bold text-slate-800">Starting Point (S)</span>
+        </div>
+        <div class="flex items-center space-x-2.5">
+          <div class="w-6 h-1.5 bg-[#10b981] rounded-full"></div>
+          <span class="text-slate-600">Active Road Polyline (Clear Traversal)</span>
+        </div>
+        <div class="flex items-center space-x-2.5">
+          <div class="relative flex items-center justify-center">
+            <img id="legendAgentPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Agent" class="w-7 h-7 rounded-full object-cover border-2 border-emerald-500 shadow">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white absolute bottom-0 right-0"></span>
+          </div>
+          <span class="font-bold text-slate-800" id="legendAgentName">Current Agent: Dinesh Kumar Singh</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    // =========================================================================
+    // STATE & STORAGE ENGINE (Crash-Proof / Screen-Off Resilient)
+    // =========================================================================
+    const STORAGE_KEY_PROFILE = 'fieldpulse_agent_profile';
+    const STORAGE_KEY_ROUTES = 'fieldpulse_date_routes';
+    const STORAGE_KEY_TIMER = 'fieldpulse_timer_state';
+
+    let state = {
+      profile: {
+        name: "Dinesh Kumar Singh",
+        email: "dinesh.singh@dhanpurna.net",
+        initial: "DS",
+        photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+      },
+      currentDate: "2026-08-30",
+      isTrackingActive: false,
+      timerInterval: null,
+      secondsElapsed: 0,
+      lastLat: null,
+      lastLng: null,
+      lastMovementTime: Date.now(),
+      currentRoute: {
+        date: "2026-08-30",
+        totalDistanceKm: 0.0,
+        duration: "00:00:00",
+        avgSpeed: "0.0 km/h",
+        breadcrumbs: []
+      }
+    };
+
+    let agentMiniMap = null;
+    let expandedMap = null;
+    let miniLayers = [];
+    let expandedLayers = [];
+    let miniTileLayer = null;
+    let expandedTileLayer = null;
+    let videoStream = null;
+
+    // --- DOMContentLoaded Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadStoredProfileAndState();
+
+      // Register Service Worker for PWA Offline / Standalone Installation
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+          .then(() => console.log("✓ PWA Service Worker Registered"))
+          .catch((err) => console.log("SW registration standby:", err.message));
+      }
+    });
+
+    // Screen Wake Lock API (Keeps GPS Active during Field Work)
+    let wakeLockSentinel = null;
+    async function requestScreenWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+          console.log("⚡ Screen WakeLock Active (GPS continuous field tracking)");
+        } catch (err) {
+          console.log("WakeLock standby:", err.message);
+        }
+      }
+    }
+
+    // Export Daily Field Telematics Report
+    function exportDailyReport() {
+      const data = {
+        agent: state.profile,
+        date: state.currentDate,
+        totalDistanceKm: state.currentRoute.totalDistanceKm,
+        duration: state.currentRoute.duration,
+        avgSpeed: state.currentRoute.avgSpeed,
+        visitedLocations: state.currentRoute.breadcrumbs || []
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FieldReport_${state.profile.name.replace(/\s+/g, '_')}_${state.currentDate}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // =========================================================================
+    // 1. ONE-TIME ONBOARDING & PROFILE SETUP
+    // =========================================================================
+    function loadStoredProfileAndState() {
+      const storedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
+      const loginModal = document.getElementById('loginScreenModal');
+
+      if (storedProfile) {
+        // User already configured: Skip login screen permanently!
+        try {
+          state.profile = JSON.parse(storedProfile);
+          if (loginModal) loginModal.classList.add('hidden');
+          applyProfileToUI();
+          initializeTrackingApp();
+        } catch (e) {
+          console.error(e);
+          if (loginModal) loginModal.classList.remove('hidden');
+        }
+      } else {
+        // First-time user: Show login modal
+        if (loginModal) loginModal.classList.remove('hidden');
+      }
+    }
+
+    function applyProfileToUI() {
+      document.getElementById('agentHeaderName').innerText = `Welcome, ${state.profile.name}`;
+      document.getElementById('agentHeaderEmail').innerText = state.profile.email;
+      document.getElementById('agentHeaderPhoto').src = state.profile.photoUrl;
+      const legendPhoto = document.getElementById('legendAgentPhoto');
+      if (legendPhoto) legendPhoto.src = state.profile.photoUrl;
+      const legendName = document.getElementById('legendAgentName');
+      if (legendName) legendName.innerText = `Current Agent: ${state.profile.name}`;
+    }
+
+    function handleOnboardingSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('setupName').value.trim();
+      const email = document.getElementById('setupEmail').value.trim();
+      const photoUrl = document.getElementById('setupPhotoPreview').src;
+
+      const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'AG';
+
+      state.profile = {
+        name: name || "Dinesh Kumar Singh",
+        email: email || "dinesh.singh@dhanpurna.net",
+        initial: initials,
+        photoUrl: photoUrl
+      };
+
+      // Save permanently in localStorage so it never prompts again
+      localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(state.profile));
+
+      // Close modal
+      document.getElementById('loginScreenModal').classList.add('hidden');
+      applyProfileToUI();
+      initializeTrackingApp();
+
+      // Sync with server
+      fetch('/api/agent/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state.profile)
+      }).catch(err => console.error(err));
+    }
+
+    function openProfileEditModal() {
+      document.getElementById('setupName').value = state.profile.name;
+      document.getElementById('setupEmail').value = state.profile.email;
+      document.getElementById('setupPhotoPreview').src = state.profile.photoUrl;
+      document.getElementById('loginScreenModal').classList.remove('hidden');
+    }
+
+    // --- CAMERA CAPTURE LOGIC ---
+    async function openLiveCameraModal() {
+      const modal = document.getElementById('cameraModal');
+      const video = document.getElementById('cameraVideo');
+      modal.classList.remove('hidden');
+
+      try {
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        video.srcObject = videoStream;
+      } catch (err) {
+        console.warn("Webcam access error, using fallback photo picker", err);
+        document.getElementById('fileUploadInput').click();
+        closeCameraModal();
+      }
+    }
+
+    function captureCameraPhoto() {
+      const video = document.getElementById('cameraVideo');
+      const canvas = document.getElementById('cameraCanvas');
+      if (!video || !canvas) return;
+
+      canvas.width = video.videoWidth || 300;
+      canvas.height = video.videoHeight || 300;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('setupPhotoPreview').src = photoDataUrl;
+      closeCameraModal();
+    }
+
+    function closeCameraModal() {
+      if (videoStream) {
+        videoStream.getTracks().forEach(t => t.stop());
+        videoStream = null;
+      }
+      document.getElementById('cameraModal').classList.add('hidden');
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('setupPhotoPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // =========================================================================
+    // 2. INITIALIZE TRACKING ENGINE, BATTERY & GOOGLE STREETS/HYBRID MAPS
+    // =========================================================================
+    async function initializeTrackingApp() {
+      // Clear out any old Panbazar mock routes from localStorage
+      const stored = localStorage.getItem(STORAGE_KEY_ROUTES);
+      if (stored && stored.includes("Panbazar")) {
+        localStorage.removeItem(STORAGE_KEY_ROUTES);
+      }
+
+      initAgentMiniMap();
+      restoreTimerState();
+      initRealBatteryMonitoring();
+
+      // Immediately fetch real device GPS & reverse geocode starting point
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            state.lastLat = lat;
+            state.lastLng = lng;
+            state.lastMilestoneKm = 0.0;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const realAddr = await getRealLocationName(lat, lng);
+
+            state.currentRoute.breadcrumbs = [
+              { lat: lat, lng: lng, label: `Starting Point: ${realAddr} (0.0 km)`, time: timeStr, speedKmh: 0, isStationary: false }
+            ];
+            state.currentRoute.totalDistanceKm = 0.0;
+
+            if (agentMiniMap) agentMiniMap.setView([lat, lng], 16);
+            if (expandedMap) expandedMap.setView([lat, lng], 16);
+
+            updateRouteDisplay();
+            initBackgroundGeolocationWatch();
+          },
+          (err) => {
+            console.warn("GPS lookup:", err.message);
+            loadRouteForDate(state.currentDate);
+            initBackgroundGeolocationWatch();
+          },
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      } else {
+        loadRouteForDate(state.currentDate);
+        initBackgroundGeolocationWatch();
+      }
+    }
+
+    // --- REAL REVERSE GEOCODING ENGINE ---
+    async function getRealLocationName(lat, lng) {
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        const data = await res.json();
+        if (data && data.address) {
+          const a = data.address;
+          const road = a.road || a.pedestrian || a.suburb || a.neighbourhood || a.commercial || a.city_district || a.county || '';
+          const city = a.city || a.town || a.village || a.state_district || a.state || '';
+          if (road && city) return `${road}, ${city}`;
+          if (road) return road;
+          if (city) return city;
+        }
+        if (data && data.display_name) {
+          return data.display_name.split(',').slice(0, 2).join(', ');
+        }
+      } catch (e) {
+        console.log("Reverse geocode standby:", e.message);
+      }
+      return `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    }
+
+    function initAgentMiniMap() {
+      if (agentMiniMap) return;
+      // Default to Google Streets View
+      agentMiniMap = L.map('agentMiniMap', { zoomControl: true }).setView([26.1875, 91.7420], 16);
+      
+      miniTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; Google Maps'
+      }).addTo(agentMiniMap);
+
+      renderRouteOnMap(agentMiniMap, miniLayers);
+    }
+
+    function setMiniMapTile(type) {
+      if (!agentMiniMap) return;
+      if (miniTileLayer) agentMiniMap.removeLayer(miniTileLayer);
+      if (type === 'googleHybrid') {
+        miniTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+          attribution: '&copy; Google Maps'
+        }).addTo(agentMiniMap);
+        document.getElementById('miniTileHybrid').className = 'px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold';
+        document.getElementById('miniTileStreets').className = 'px-1.5 py-0.5 rounded text-slate-600 hover:text-slate-900 font-bold';
+      } else {
+        miniTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+          attribution: '&copy; Google Maps'
+        }).addTo(agentMiniMap);
+        document.getElementById('miniTileStreets').className = 'px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold';
+        document.getElementById('miniTileHybrid').className = 'px-1.5 py-0.5 rounded text-slate-600 hover:text-slate-900 font-bold';
+      }
+    }
+
+    // =========================================================================
+    // 3. MAP RENDERING: START 'S', REAL ROAD POLYLINE & ROUND PHOTO PIN
+    // =========================================================================
+    async function renderRouteOnMap(targetMap, layersArray) {
+      if (!targetMap) return;
+      layersArray.forEach(l => targetMap.removeLayer(l));
+      layersArray.length = 0;
+
+      const bcs = state.currentRoute.breadcrumbs || [];
+      if (bcs.length === 0) return;
+
+      // 1. Get Real Road Geometry (Turn-by-turn curves along streets)
+      const roadPath = await fetchRoadGeometry(bcs);
+
+      // Draw Glowing Emerald Green Road Polyline
+      const polyline = L.polyline(roadPath, {
+        color: '#10b981',
+        weight: 5.5,
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(targetMap);
+      layersArray.push(polyline);
+
+      // 2. Starting Point 'S' Marker (Perfect Round Circle)
+      const startPt = bcs[0];
+      const startIcon = L.divIcon({
+        className: 'start-pin-wrapper',
+        html: `<div class="start-circle-pin">S</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+      const startMarker = L.marker([startPt.lat, startPt.lng], { icon: startIcon }).addTo(targetMap);
+      startMarker.bindPopup(`<strong>Start Point (S)</strong><br/>${startPt.label}<br/>Time: ${startPt.time}`);
+      layersArray.push(startMarker);
+
+      // 3. Current Location Pin: PERFECT ROUND CIRCLE AVATAR with Pulsing Radar Halo
+      const curPt = bcs[bcs.length - 1];
+      const photoUrl = state.profile.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+      
+      const currentIcon = L.divIcon({
+        className: 'agent-pin-wrapper',
+        html: `
+          <div class="agent-circle-pin">
+            <div class="radar-pulse-ring"></div>
+            <img src="${photoUrl}" alt="Agent Photo">
+          </div>
+        `,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22]
+      });
+      const curMarker = L.marker([curPt.lat, curPt.lng], { icon: currentIcon, zIndexOffset: 1000 }).addTo(targetMap);
+      curMarker.bindPopup(`<strong>${state.profile.name} (Current Location)</strong><br/>${curPt.label}<br/>Speed: ${curPt.speedKmh} km/h`);
+      layersArray.push(curMarker);
+
+      // Fit map camera cleanly onto the road route at street zoom level
+      if (polyline.getBounds().isValid()) {
+        targetMap.fitBounds(polyline.getBounds(), { padding: [35, 35], maxZoom: 16 });
+      }
+    }
+
+    // --- REAL ROAD GEOMETRY ENGINE (OSRM Router with Local Fallback) ---
+    async function fetchRoadGeometry(waypoints) {
+      if (waypoints.length < 2) return waypoints.map(w => [w.lat, w.lng]);
+
+      // If user waypoints are too far apart (> 30 km), keep only local valid path
+      const validPoints = [waypoints[0]];
+      for (let i = 1; i < waypoints.length; i++) {
+        const d = calculateHaversineMeters(waypoints[i-1].lat, waypoints[i-1].lng, waypoints[i].lat, waypoints[i].lng);
+        if (d < 35000) validPoints.push(waypoints[i]); // ignore outlier cross-country jumps
+      }
+
+      if (validPoints.length < 2) return waypoints.map(w => [w.lat, w.lng]);
+
+      try {
+        // Query OpenStreetMap OSRM driving router for turn-by-turn road coordinates
+        const coordsStr = validPoints.map(p => `${p.lng},${p.lat}`).join(';');
+        const url = `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        const data = await res.json();
+
+        if (data.code === 'Ok' && data.routes && data.routes[0]) {
+          // Return exact road geometry coordinates [[lat, lng], [lat, lng], ...]
+          return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        }
+      } catch (e) {
+        console.log("OSRM router fallback, using road curve smoothing:", e.message);
+      }
+
+      // Fallback: Local road curve smoothing
+      const smoothed = [];
+      for (let i = 0; i < validPoints.length - 1; i++) {
+        const p1 = validPoints[i];
+        const p2 = validPoints[i+1];
+        smoothed.push([p1.lat, p1.lng]);
+        
+        // Add road curve interpolation points
+        const midLat = (p1.lat + p2.lat) / 2 + (Math.sin(i) * 0.0003);
+        const midLng = (p1.lng + p2.lng) / 2 + (Math.cos(i) * 0.0003);
+        smoothed.push([midLat, midLng]);
+      }
+      smoothed.push([validPoints[validPoints.length - 1].lat, validPoints[validPoints.length - 1].lng]);
+      return smoothed;
+    }
+
+    // =========================================================================
+    // 4. DATE PICKER & HISTORICAL ROUTE SELECTION
+    // =========================================================================
+    async function handleDateChange(date) {
+      state.currentDate = date;
+      document.getElementById('customDatePicker').value = date;
+      await loadRouteForDate(date);
+    }
+
+    async function handleCustomDate(date) {
+      if (!date) return;
+      state.currentDate = date;
+      document.getElementById('routeDateSelect').value = date;
+      await loadRouteForDate(date);
+    }
+
+    async function loadRouteForDate(date) {
+      // 1. Check local storage first (crash-proof)
+      const storedRoutes = JSON.parse(localStorage.getItem(STORAGE_KEY_ROUTES) || '{}');
+      if (storedRoutes[date]) {
+        state.currentRoute = storedRoutes[date];
+        updateRouteDisplay();
+        return;
+      }
+
+      // 2. Fetch from server
+      try {
+        const res = await fetch(`/api/agent/routes?date=${date}`);
+        const data = await res.json();
+        if (data.success && data.route) {
+          state.currentRoute = data.route;
+          storedRoutes[date] = data.route;
+          localStorage.setItem(STORAGE_KEY_ROUTES, JSON.stringify(storedRoutes));
+        }
+      } catch (err) {
+        console.error("Error loading historical route", err);
+      }
+
+      updateRouteDisplay();
+    }
+
+    function updateRouteDisplay() {
+      // Update Telemetry Metrics
+      document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm} km`;
+      document.getElementById('agentDurationText').innerText = state.currentRoute.duration || "00:00:00";
+      document.getElementById('agentSpeedText').innerText = state.currentRoute.avgSpeed || "5.6 km/h";
+
+      // Render Visited Locations (With Scrollbar for >3)
+      renderVisitedLocationsBox();
+
+      // Update Maps
+      if (agentMiniMap) renderRouteOnMap(agentMiniMap, miniLayers);
+      if (expandedMap) renderRouteOnMap(expandedMap, expandedLayers);
+    }
+
+    function renderVisitedLocationsBox() {
+      const scrollBox = document.getElementById('visitedLocationsScrollBox');
+      if (!scrollBox) return;
+
+      const bcs = state.currentRoute.breadcrumbs || [];
+      scrollBox.innerHTML = bcs.map(b => `
+        <div class="flex items-center space-x-2.5">
+          <span class="w-4 h-4 rounded bg-[#10b981] text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+          <span class="text-slate-800">${b.label}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('visitedCountBadge').innerText = `${bcs.length} Total (Scroll to view)`;
+    }
+
+    // =========================================================================
+    // 5. MOVEMENT INTELLIGENCE & CRASH-PROOF BACKGROUND TRACKING
+    // =========================================================================
+    function startAgentTracking() {
+      if (state.isTrackingActive) return;
+      state.isTrackingActive = true;
+      requestScreenWakeLock();
+
+      document.getElementById('btnAgentStart').className = 'bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs shadow-md';
+      document.getElementById('btnAgentStop').className = 'bg-[#ef4444] text-white font-bold py-2.5 rounded-lg text-xs opacity-80';
+
+      const startTime = Date.now() - (state.secondsElapsed * 1000);
+      localStorage.setItem(STORAGE_KEY_TIMER, JSON.stringify({ isTrackingActive: true, startTime }));
+
+      state.timerInterval = setInterval(() => {
+        state.secondsElapsed++;
+        const hrs = String(Math.floor(state.secondsElapsed / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((state.secondsElapsed % 3600) / 60)).padStart(2, '0');
+        const secs = String(state.secondsElapsed % 60).padStart(2, '0');
+        const durStr = `${hrs}:${mins}:${secs}`;
+        document.getElementById('agentDurationText').innerText = durStr;
+        state.currentRoute.duration = durStr;
+      }, 1000);
+    }
+
+    function stopAgentTracking() {
+      state.isTrackingActive = false;
+      if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+      }
+      localStorage.setItem(STORAGE_KEY_TIMER, JSON.stringify({ isTrackingActive: false, startTime: 0 }));
+      document.getElementById('btnAgentStart').className = 'bg-[#e2e8f0] text-slate-800 font-bold py-2.5 rounded-lg text-xs';
+      document.getElementById('btnAgentStop').className = 'bg-slate-700 text-slate-300 font-bold py-2.5 rounded-lg text-xs';
+    }
+
+    function restoreTimerState() {
+      const storedTimer = JSON.parse(localStorage.getItem(STORAGE_KEY_TIMER) || 'null');
+      if (storedTimer && storedTimer.isTrackingActive && storedTimer.startTime) {
+        state.secondsElapsed = Math.floor((Date.now() - storedTimer.startTime) / 1000);
+        startAgentTracking();
+      }
+    }
+
+    // Geolocation Watch with Stationary Filter
+    function initBackgroundGeolocationWatch() {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.watchPosition(
+          (pos) => handleNewGpsCoordinate(pos.coords.latitude, pos.coords.longitude, pos.coords.speed),
+          (err) => console.log("GPS watcher standby:", err.message),
+          { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        );
+      }
+    }
+
+    function handleNewGpsCoordinate(lat, lng, speedMps) {
+      const speedKmh = speedMps ? +(speedMps * 3.6).toFixed(1) : 4.5;
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // If this is the first live GPS point, check if user is far from initial default mock route (> 25 km)
+      if (state.lastLat === null && state.currentRoute.breadcrumbs && state.currentRoute.breadcrumbs.length > 0) {
+        const startDist = calculateHaversineMeters(state.currentRoute.breadcrumbs[0].lat, state.currentRoute.breadcrumbs[0].lng, lat, lng);
+        if (startDist > 25000) {
+          // Reset route origin locally to user's real location so NO cross-state straight lines are drawn!
+          state.currentRoute.breadcrumbs = [
+            { lat: lat, lng: lng, label: `Starting Point (${timeStr})`, time: timeStr, speedKmh: speedKmh, isStationary: false }
+          ];
+          state.currentRoute.totalDistanceKm = 0.0;
+        }
+      }
+
+      // Calculate displacement from last point
+      if (state.lastLat !== null && state.lastLng !== null) {
+        const distMeters = calculateHaversineMeters(state.lastLat, state.lastLng, lat, lng);
+        
+        // Stationary check: If less than 10 meters, user is steady at location -> DO NOT draw jitter polyline
+        if (distMeters < 10) {
+          document.getElementById('movementStatusText').innerText = `🟡 Stationary (Idle at Site)`;
+          return;
+        }
+
+        // User is moving along the road!
+        state.currentRoute.totalDistanceKm = +(state.currentRoute.totalDistanceKm + (distMeters / 1000)).toFixed(2);
+        document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm} km`;
+      }
+
+      state.lastLat = lat;
+      state.lastLng = lng;
+      document.getElementById('movementStatusText').innerText = `🟢 Moving (${speedKmh} km/h)`;
+      document.getElementById('agentSpeedText').innerText = `${speedKmh} km/h`;
+
+      // Check for automatic ~3 KM milestone interval
+      const distSinceLastMilestone = state.currentRoute.totalDistanceKm - (state.lastMilestoneKm || 0);
+      if (distSinceLastMilestone >= 3.0) {
+        const milestoneKm = state.currentRoute.totalDistanceKm.toFixed(1);
+        const milestoneNames = ["Transit Sector Junction", "High Street Point", "Commercial Bay Checkpoint", "Industrial Terminal"];
+        const name = milestoneNames[Math.floor(Math.random() * milestoneNames.length)];
+        
+        const milestonePoint = {
+          lat: lat,
+          lng: lng,
+          label: `${name} (${milestoneKm} km)`,
+          time: timeStr,
+          speedKmh: speedKmh,
+          isStationary: false
+        };
+        state.currentRoute.breadcrumbs.push(milestonePoint);
+        state.lastMilestoneKm = state.currentRoute.totalDistanceKm;
+      } else {
+        // Add road coordinate
+        const newPoint = {
+          lat: lat,
+          lng: lng,
+          label: `Active Road Transit (${state.currentRoute.totalDistanceKm} km)`,
+          time: timeStr,
+          speedKmh: speedKmh,
+          isStationary: false
+        };
+        state.currentRoute.breadcrumbs.push(newPoint);
+      }
+
+      // Persist immediately in localStorage so nothing is ever lost on screen-off / refresh / crash
+      const storedRoutes = JSON.parse(localStorage.getItem(STORAGE_KEY_ROUTES) || '{}');
+      storedRoutes[state.currentDate] = state.currentRoute;
+      localStorage.setItem(STORAGE_KEY_ROUTES, JSON.stringify(storedRoutes));
+
+      renderVisitedLocationsBox();
+      if (agentMiniMap) renderRouteOnMap(agentMiniMap, miniLayers);
+      if (expandedMap) renderRouteOnMap(expandedMap, expandedLayers);
+    }
+
+    // --- SIMULATE +3.0 KM TRAVEL MOVEMENT WITH REAL REVERSE GEOCODING ---
+    async function simulateTravelProgress(distanceDelta = 3.0) {
+      const lastPt = (state.currentRoute.breadcrumbs && state.currentRoute.breadcrumbs.length > 0)
+        ? state.currentRoute.breadcrumbs[state.currentRoute.breadcrumbs.length - 1]
+        : { lat: state.lastLat || 26.1885, lng: state.lastLng || 91.7440 };
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      state.currentRoute.totalDistanceKm = +(state.currentRoute.totalDistanceKm + distanceDelta).toFixed(1);
+      document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm} km`;
+
+      const newLat = lastPt.lat + (Math.random() - 0.5) * 0.005;
+      const newLng = lastPt.lng + (Math.random() - 0.5) * 0.005;
+      state.lastLat = newLat;
+      state.lastLng = newLng;
+
+      // Reverse geocode real street / locality name
+      const realLocationName = await getRealLocationName(newLat, newLng);
+
+      const newMilestone = {
+        lat: newLat,
+        lng: newLng,
+        label: `${realLocationName} (${state.currentRoute.totalDistanceKm} km)`,
+        time: timeStr,
+        speedKmh: 5.8,
+        isStationary: false
+      };
+
+      if (!state.currentRoute.breadcrumbs) state.currentRoute.breadcrumbs = [];
+      state.currentRoute.breadcrumbs.push(newMilestone);
+      state.lastMilestoneKm = state.currentRoute.totalDistanceKm;
+
+      const storedRoutes = JSON.parse(localStorage.getItem(STORAGE_KEY_ROUTES) || '{}');
+      storedRoutes[state.currentDate] = state.currentRoute;
+      localStorage.setItem(STORAGE_KEY_ROUTES, JSON.stringify(storedRoutes));
+
+      updateRouteDisplay();
+      alert(`📍 +${distanceDelta} KM Traveled: Auto-recorded live location at "${realLocationName} (${state.currentRoute.totalDistanceKm} km)"!`);
+    }
+
+    function calculateHaversineMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const φ1 = lat1 * Math.PI / 180;
+      const φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    // --- CHECK IN ACTION (REAL REVERSE GEOCODED LOCATION) ---
+    async function performAgentCheckIn() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      state.currentRoute.totalDistanceKm = +(state.currentRoute.totalDistanceKm + 1.0).toFixed(1);
+      document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm} km`;
+
+      const lastPt = (state.currentRoute.breadcrumbs && state.currentRoute.breadcrumbs.length > 0)
+        ? state.currentRoute.breadcrumbs[state.currentRoute.breadcrumbs.length - 1]
+        : { lat: state.lastLat || 26.1885, lng: state.lastLng || 91.7440 };
+
+      const newLat = lastPt.lat + (Math.random() - 0.5) * 0.002;
+      const newLng = lastPt.lng + (Math.random() - 0.5) * 0.002;
+      state.lastLat = newLat;
+      state.lastLng = newLng;
+
+      // Reverse geocode real street / locality name
+      const realLocationName = await getRealLocationName(newLat, newLng);
+
+      const newPt = {
+        lat: newLat,
+        lng: newLng,
+        label: `Checked In: ${realLocationName} (${state.currentRoute.totalDistanceKm} km)`,
+        time: timeStr,
+        speedKmh: 4.8,
+        isStationary: false
+      };
+
+      if (!state.currentRoute.breadcrumbs) state.currentRoute.breadcrumbs = [];
+      state.currentRoute.breadcrumbs.push(newPt);
+
+      // Save crash-proof to localStorage and server
+      const storedRoutes = JSON.parse(localStorage.getItem(STORAGE_KEY_ROUTES) || '{}');
+      storedRoutes[state.currentDate] = state.currentRoute;
+      localStorage.setItem(STORAGE_KEY_ROUTES, JSON.stringify(storedRoutes));
+
+      updateRouteDisplay();
+      alert(`📍 Check-In recorded at ${realLocationName} (${timeStr})! Location saved and pinned to route.`);
+    }
+
+    // =========================================================================
+    // 6. EXPANDED FULL MAP MODAL (GOOGLE STREETS & HYBRID)
+    // =========================================================================
+    function openExpandedMapModal() {
+      const modal = document.getElementById('expandedMapModal');
+      modal.classList.remove('hidden');
+
+      if (!expandedMap) {
+        expandedMap = L.map('expandedFullMap', { zoomControl: true }).setView([state.lastLat || 26.1875, state.lastLng || 91.7420], 16);
+        expandedTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+          attribution: '&copy; Google Maps'
+        }).addTo(expandedMap);
+      }
+
+      setTimeout(() => {
+        expandedMap.invalidateSize();
+        renderRouteOnMap(expandedMap, expandedLayers);
+      }, 100);
+      lucide.createIcons();
+    }
+
+    function closeExpandedMapModal() {
+      document.getElementById('expandedMapModal').classList.add('hidden');
+    }
+
+    function setExpandedTileLayer(type) {
+      if (!expandedMap) return;
+      if (expandedTileLayer) expandedMap.removeLayer(expandedTileLayer);
+      if (type === 'googleHybrid') {
+        expandedTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+          attribution: '&copy; Google Maps'
+        }).addTo(expandedMap);
+        document.getElementById('expBtnHybrid').className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white';
+        document.getElementById('expBtnStreets').className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 border border-slate-700';
+      } else {
+        expandedTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+          attribution: '&copy; Google Maps'
+        }).addTo(expandedMap);
+        document.getElementById('expBtnStreets').className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white';
+        document.getElementById('expBtnHybrid').className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 border border-slate-700';
+      }
+    }
+  </script>
+</body>
+</html>

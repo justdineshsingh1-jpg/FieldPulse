@@ -1,0 +1,26 @@
+{
+  "name": "fieldpulse-intelligence-platform",
+  "version": "1.0.0",
+  "description": "Next-Gen Construction Field Reporting, AI Voice/Vision Engine & Geofenced Telematics Platform",
+  "main": "server/src/index.js",
+  "scripts": {
+    "start": "node server/src/index.js",
+    "dev": "node server/src/index.js"
+  },
+  "keywords": [
+    "construction",
+    "telematics",
+    "geofencing",
+    "ai-voice-reporting",
+    "computer-vision",
+    "safety-compliance",
+    "offline-first"
+  ],
+  "author": "FieldPulse Engineering",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}
