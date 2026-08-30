@@ -1,0 +1,16 @@
+﻿{
+  "appId": "com.innbuilt.fieldtracker",
+  "appName": "FieldTracker",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true,
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "BackgroundGeolocation": {
+      "notificationTitle": "InnBuilt FieldTracker",
+      "notificationText": "Recording Road Traversal & Visited Locations in background"
+    }
+  }
+}
