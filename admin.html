@@ -128,7 +128,7 @@
         <span class="text-xs text-slate-400 font-medium">Viewing Agent:</span>
         <select id="agentFilterSelect" onchange="onAgentFilterChanged(this.value)" class="bg-slate-950 border border-slate-700 text-xs text-white font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer">
           <option value="ALL">🌐 All Fleet Agents (Combined Overview)</option>
-          <option value="unit-01">👤 Dinesh Kumar Singh (Hero Splendor)</option>
+          <option value="unit-01" id="optUnit1">👤 Field Unit 1 (Live GPS)</option>
           <option value="unit-02">👤 Rakesh Barua (Honda Activa)</option>
           <option value="unit-03">👤 Amit Bora (Swift Dzire)</option>
           <option value="unit-04">👤 Rahul Das (Bajaj Pulsar)</option>
@@ -423,8 +423,8 @@
       "2026-08-30": [
         {
           id: "unit-01",
-          name: "Dinesh Kumar Singh",
-          email: "dinesh.singh@dhanpurna.net",
+          name: "Field Agent 1 (Live GPS)",
+          email: "agent1@company.com",
           photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
           vehicleName: "Hero Splendor Plus (AS-01-EF-4521)",
           vehicleType: "Bike (100cc)",
@@ -519,8 +519,8 @@
       "2026-08-29": [
         {
           id: "unit-01",
-          name: "Dinesh Kumar Singh",
-          email: "dinesh.singh@dhanpurna.net",
+          name: "Field Agent 1 (Live GPS)",
+          email: "agent1@company.com",
           photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
           vehicleName: "Hero Splendor Plus (AS-01-EF-4521)",
           vehicleType: "Bike (100cc)",
@@ -568,8 +568,8 @@
       "2026-08-28": [
         {
           id: "unit-01",
-          name: "Dinesh Kumar Singh",
-          email: "dinesh.singh@dhanpurna.net",
+          name: "Field Agent 1 (Live GPS)",
+          email: "agent1@company.com",
           photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
           vehicleName: "Hero Splendor Plus (AS-01-EF-4521)",
           vehicleType: "Bike (100cc)",
@@ -592,8 +592,31 @@
       ]
     };
 
-    // Load saved vehicle profiles from LocalStorage if available
+    // Load saved vehicle profiles & registered user profile from LocalStorage
     function loadSavedVehicleConfigs() {
+      // 1. Check for real live agent profile registered on device
+      const registeredProfile = localStorage.getItem('fieldpulse_agent_profile');
+      if (registeredProfile) {
+        try {
+          const prof = JSON.parse(registeredProfile);
+          if (prof && prof.name) {
+            Object.keys(multiDayFleetDatabase).forEach(date => {
+              multiDayFleetDatabase[date].forEach(unit => {
+                if (unit.id === 'unit-01') {
+                  unit.name = `${prof.name} (Live GPS)`;
+                  unit.email = prof.email || 'active.agent@company.com';
+                  if (prof.photoUrl) unit.photoUrl = prof.photoUrl;
+                  if (prof.vehicleNo) unit.vehicleName = `${prof.vehicleType || 'Vehicle'} (${prof.vehicleNo})`;
+                }
+              });
+            });
+            const opt = document.getElementById('optUnit1');
+            if (opt) opt.innerText = `👤 ${prof.name} (Live GPS)`;
+          }
+        } catch(e) { console.error(e); }
+      }
+
+      // 2. Load custom vehicle configs
       const saved = localStorage.getItem('fieldpulse_vehicle_configs');
       if (saved) {
         try {
