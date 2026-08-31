@@ -1,5 +1,5 @@
-﻿// Service Worker for InnBuilt Field Tracker PWA
-const CACHE_NAME = 'fieldpulse-cache-v1';
+// Field Tracker Pro Service Worker (Network-First Auto-Updating)
+const CACHE_NAME = 'fieldtracker-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -11,11 +11,6 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS).catch((err) => console.log('SW cache partial', err));
-    })
-  );
   self.skipWaiting();
 });
 
@@ -23,7 +18,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys.map((key) => caches.delete(key))
       );
     })
   );
@@ -31,14 +26,22 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network first with cache fallback for dynamic API & tiles
-  if (event.request.url.includes('/api/') || event.request.url.includes('google.com') || event.request.url.includes('tile.openstreetmap')) {
+  // Navigation / HTML documents: ALWAYS Network-First to get latest updates instantly!
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
     );
-  } else {
-    event.respondWith(
-      caches.match(event.request).then((res) => res || fetch(event.request))
-    );
+    return;
   }
+
+  // All other assets: Fetch online with cache fallback
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
 });
