@@ -206,31 +206,35 @@
   <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 z-30 px-3.5 py-2.5 flex items-center justify-between shrink-0">
     <div class="flex items-center space-x-2.5 min-w-0">
       <div class="relative shrink-0" onclick="openProfileEditModal()" title="Edit Profile">
-        <img id="agentHeaderPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="w-8 h-8 rounded-full object-cover border-2 border-emerald-500 cursor-pointer">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-slate-900 absolute bottom-0 right-0"></span>
+        <img id="agentHeaderPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="w-9 h-9 rounded-full object-cover border-2 border-emerald-500 cursor-pointer shadow">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-900 absolute bottom-0 right-0"></span>
       </div>
       <div class="min-w-0" onclick="openProfileEditModal()">
-        <h2 id="agentHeaderName" class="font-extrabold text-xs sm:text-sm text-white truncate leading-tight">Field Agent</h2>
-        <div class="flex items-center space-x-1.5 text-[10px] text-slate-400">
-          <span id="agentHeaderEmail" class="truncate">Active Duty</span>
+        <div class="flex items-center space-x-1.5">
+          <h2 id="agentHeaderName" class="font-extrabold text-xs sm:text-sm text-white truncate leading-tight">Field Agent</h2>
+          <span class="text-[9px] bg-blue-600/30 text-blue-300 border border-blue-500/30 px-1.5 py-0.2 rounded font-bold uppercase tracking-wider">Field Tracker Pro</span>
+        </div>
+        <div class="flex items-center space-x-1.5 text-[10px] text-slate-400 mt-0.5">
+          <span id="agentHeaderEmail" class="truncate font-medium">Ready for Duty</span>
           <span class="text-slate-600">·</span>
           <span id="currentDateBadge" class="text-blue-400 font-mono font-bold">Today</span>
         </div>
       </div>
     </div>
 
-    <!-- Battery, Mode & Hub Actions -->
+    <!-- Live Real Battery & GPS Live Status (NO Admin Link / NO Download Button) -->
     <div class="flex items-center space-x-2 shrink-0">
+      <!-- Live GPS Active Pill -->
+      <div class="flex items-center space-x-1.5 bg-emerald-950/70 text-emerald-400 px-2.5 py-1 rounded-xl border border-emerald-500/30 text-xs font-mono font-bold shadow-sm">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-[11px]">GPS LIVE</span>
+      </div>
+
       <!-- Live Real Battery Indicator -->
       <div id="agentBatteryBadge" class="flex items-center space-x-1 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 text-xs font-mono font-bold text-emerald-400 shadow-sm">
         <span id="agentBatteryIcon">🔋</span>
         <span id="agentBatteryText">--%</span>
       </div>
-
-      <!-- Admin Hub Direct Link -->
-      <a href="admin.html" class="px-2.5 py-1 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold flex items-center space-x-1 transition">
-        <span>🖥️ Admin</span>
-      </a>
     </div>
   </header>
 
@@ -900,11 +904,17 @@
     }
 
     function restoreSavedLiveSession() {
+      // Purge any legacy mock cache
+      localStorage.removeItem('fieldpulse_date_routes');
       const saved = localStorage.getItem(STORAGE_KEY_ACTIVE_ROUTE);
       if (saved) {
         try {
+          if (saved.includes("Panbazar") || saved.includes("Riverfront") || saved.includes("8.4") || saved.includes("Digholi")) {
+            localStorage.removeItem(STORAGE_KEY_ACTIVE_ROUTE);
+            return;
+          }
           const parsed = JSON.parse(saved);
-          if (parsed && parsed.date === todayStr) {
+          if (parsed && parsed.date === todayStr && parsed.breadcrumbs && parsed.breadcrumbs.length > 0) {
             state.currentRoute = parsed;
             document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm.toFixed(2)} km`;
             document.getElementById('agentDurationText').innerText = state.currentRoute.duration || '00:00:00';
