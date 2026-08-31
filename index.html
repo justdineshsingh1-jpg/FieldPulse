@@ -9,36 +9,28 @@
   <title>Field Tracker Pro - Live GPS & Attendance</title>
   
   <script>
-    // Force purge old PWA service worker caches so mobile users get latest changes instantly
+    // Unregister legacy service workers to guarantee latest live version
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-          registration.unregister();
-        }
-      });
-    }
-    if ('caches' in window) {
-      caches.keys().then(function(names) {
-        for (let name of names) caches.delete(name);
+        for(let r of registrations) { r.unregister(); }
       });
     }
   </script>
 
-  <!-- PWA Mobile App Support -->
+  <!-- PWA Settings -->
   <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="FieldTrackerPro">
-  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
   
-  <!-- Tailwind CSS & Lucide -->
+  <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
     * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -49,11 +41,23 @@
       padding: 0;
       overflow: hidden;
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #020617;
+      background-color: #0f172a;
     }
     code, .font-mono { font-family: 'JetBrains Mono', monospace; }
     
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    #masterAppMap {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      background: #e2e8f0;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
@@ -88,145 +92,14 @@
       animation: haloPulse 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
       pointer-events: none !important; z-index: 1 !important;
     }
-    .leaflet-popup-content { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen w-screen flex flex-col antialiased select-none">
+<body class="h-screen w-screen flex flex-col antialiased select-none text-slate-100 relative">
 
   <!-- =========================================================================
-       1. FIRST-TIME EMPLOYEE ONBOARDING & PERMISSION SETUP WIZARD
+       1. TOP APP HEADER (Field Tracker Pro)
   ========================================================================= -->
-  <div id="loginScreenModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[99999] hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-800 relative max-h-[92vh] overflow-y-auto custom-scrollbar">
-      
-      <div class="text-center mb-5">
-        <div class="w-12 h-12 bg-blue-600 text-white rounded-2xl mx-auto flex items-center justify-center font-black text-2xl shadow-lg shadow-blue-600/30 mb-2.5">
-          IB
-        </div>
-        <h2 class="font-extrabold text-xl text-white tracking-tight">Field Worker Registration</h2>
-        <p class="text-xs text-slate-400 mt-0.5">Please setup your profile to start recording real GPS road routes.</p>
-      </div>
-
-      <form id="onboardingForm" onsubmit="handleOnboardingSubmit(event)" class="space-y-4">
-        <div>
-          <label class="text-xs font-bold text-slate-300 block mb-1">Your Full Name <span class="text-rose-400">*</span></label>
-          <input type="text" id="setupName" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 text-sm focus:outline-none focus:border-blue-500 text-white bg-slate-950" placeholder="e.g. Rahul Sharma" value="">
-        </div>
-
-        <div>
-          <label class="text-xs font-bold text-slate-300 block mb-1">Email / Employee ID <span class="text-rose-400">*</span></label>
-          <input type="text" id="setupEmail" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 text-sm focus:outline-none focus:border-blue-500 text-white bg-slate-950" placeholder="e.g. rahul.sharma@company.com" value="">
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs font-bold text-slate-300 block mb-1">Vehicle Type</label>
-            <select id="setupVehicleType" class="w-full px-3 py-2.5 rounded-xl border border-slate-700 text-xs focus:outline-none focus:border-blue-500 text-white bg-slate-950 font-bold">
-              <option value="Bike">🏍️ Bike / Two-Wheeler</option>
-              <option value="Scooter">🛵 Scooter (110cc)</option>
-              <option value="Car">🚗 Car / Four-Wheeler</option>
-              <option value="EV">⚡ EV Scooter</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-300 block mb-1">Vehicle Number</label>
-            <input type="text" id="setupVehicleNo" class="w-full px-3 py-2.5 rounded-xl border border-slate-700 text-xs focus:outline-none focus:border-blue-500 text-white bg-slate-950 font-mono" placeholder="e.g. AS-01-AB-1234">
-          </div>
-        </div>
-
-        <!-- Photo Capture / Camera Section -->
-        <div>
-          <label class="text-xs font-bold text-slate-300 block mb-1.5">Profile Photo (Shown as Live Map Pin)</label>
-          <div class="flex items-center space-x-4">
-            <div class="relative">
-              <img id="setupPhotoPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Agent Photo" class="w-14 h-14 rounded-full object-cover border-2 border-emerald-500 shadow-md">
-              <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900 absolute bottom-0 right-0"></span>
-            </div>
-
-            <div class="flex-1 space-y-1.5">
-              <button type="button" onclick="openLiveCameraModal()" class="w-full bg-blue-950/60 hover:bg-blue-900 text-blue-300 text-xs font-bold py-2 px-3 rounded-xl border border-blue-800 flex items-center justify-center space-x-1.5 transition active:scale-95">
-                <i data-lucide="camera" class="w-4 h-4"></i>
-                <span>Take Live Selfie</span>
-              </button>
-              
-              <button type="button" onclick="triggerDeviceUpload()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2 px-3 rounded-xl border border-slate-700 flex items-center justify-center space-x-1.5 cursor-pointer transition active:scale-95">
-                <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
-                <span>Upload From Gallery / Files</span>
-              </button>
-              <input type="file" id="fileUploadInput" accept="image/*" onchange="handleFileUpload(event)" style="display:none;">
-            </div>
-          </div>
-        </div>
-
-        <!-- Android Background & Hardware Permissions Checklist (Grant All Once) -->
-        <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
-          <div class="flex items-center justify-between">
-            <p class="text-[11px] font-extrabold text-slate-300 uppercase tracking-wider flex items-center space-x-1">
-              <span>🛡️ One-Time Permissions</span>
-            </p>
-            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">Never Asks Again</span>
-          </div>
-
-          <div class="space-y-1.5 text-xs text-slate-400">
-            <div class="flex items-center justify-between p-2 bg-slate-900 rounded-xl border border-slate-800">
-              <div class="flex items-center space-x-2">
-                <span class="text-blue-400 font-bold">📍 GPS ("Allow all the time")</span>
-              </div>
-              <button type="button" onclick="requestInitialLocationPermission()" id="permBtnLoc" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-[11px]">
-                Grant GPS
-              </button>
-            </div>
-
-            <div class="flex items-center justify-between p-2 bg-slate-900 rounded-xl border border-slate-800">
-              <div class="flex items-center space-x-2">
-                <span class="text-emerald-400 font-bold">📷 Camera & Storage</span>
-              </div>
-              <button type="button" onclick="grantCameraAndStoragePermission()" id="permBtnCam" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px]">
-                Grant Access
-              </button>
-            </div>
-          </div>
-
-          <p class="text-[10px] text-slate-400 leading-tight">
-            ℹ️ Select <strong class="text-white">"Allow all the time"</strong> when prompted once. Your permission is saved permanently and will never ask again.
-          </p>
-        </div>
-
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center space-x-2 shadow-lg shadow-blue-600/30 transition mt-4">
-          <span>Save Profile & Start Tracking</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </button>
-      </form>
-
-    </div>
-  </div>
-
-  <!-- Camera Capture Modal -->
-  <div id="cameraModal" class="fixed inset-0 bg-black/90 z-[100000] hidden flex flex-col items-center justify-center p-4">
-    <div class="bg-slate-900 rounded-3xl p-5 max-w-sm w-full text-center space-y-4 border border-slate-800">
-      <h3 class="font-bold text-white text-sm">Take Agent Profile Photo</h3>
-      <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-inner flex items-center justify-center">
-        <video id="cameraVideo" autoplay playsinline class="w-full h-full object-cover"></video>
-        <canvas id="cameraCanvas" class="hidden"></canvas>
-      </div>
-      <div class="flex items-center justify-center space-x-3">
-        <button onclick="captureCameraPhoto()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-emerald-500/30 transition">
-          <i data-lucide="camera" class="w-4 h-4"></i>
-          <span>Capture Photo</span>
-        </button>
-        <button onclick="closeCameraModal()" class="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-700">
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================================
-       2. FULL-SCREEN EDGE-TO-EDGE APPLICATION LAYOUT
-  ========================================================================= -->
-  
-  <!-- Top App Header -->
-  <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 z-30 px-3.5 py-2.5 flex items-center justify-between shrink-0">
+  <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 z-30 px-3.5 py-2.5 flex items-center justify-between shrink-0 shadow-lg">
     <div class="flex items-center space-x-2.5 min-w-0">
       <div class="relative shrink-0" onclick="openProfileEditModal()" title="Edit Profile">
         <img id="agentHeaderPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="w-9 h-9 rounded-full object-cover border-2 border-emerald-500 cursor-pointer shadow">
@@ -245,15 +118,13 @@
       </div>
     </div>
 
-    <!-- Live Real Battery & GPS Live Status (NO Admin Link / NO Download Button) -->
+    <!-- Battery & GPS Live Status -->
     <div class="flex items-center space-x-2 shrink-0">
-      <!-- Live GPS Active Pill -->
       <div class="flex items-center space-x-1.5 bg-emerald-950/70 text-emerald-400 px-2.5 py-1 rounded-xl border border-emerald-500/30 text-xs font-mono font-bold shadow-sm">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span class="text-[11px]">GPS LIVE</span>
       </div>
 
-      <!-- Live Real Battery Indicator -->
       <div id="agentBatteryBadge" class="flex items-center space-x-1 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 text-xs font-mono font-bold text-emerald-400 shadow-sm">
         <span id="agentBatteryIcon">🔋</span>
         <span id="agentBatteryText">--%</span>
@@ -261,11 +132,13 @@
     </div>
   </header>
 
-  <!-- 3. FULL-BLEED MASTER GIS MAP (Fills 100% Screen Height) -->
-  <main class="flex-1 w-full relative overflow-hidden flex flex-col">
+  <!-- =========================================================================
+       2. FULL-BLEED INTERACTIVE GIS MAP (Visible Edge-to-Edge)
+  ========================================================================= -->
+  <main class="flex-1 w-full relative overflow-hidden">
     
-    <!-- Full-Screen Interactive Leaflet Map Container -->
-    <div id="masterAppMap" class="w-full h-full absolute inset-0 z-0"></div>
+    <!-- Map Canvas Element -->
+    <div id="masterAppMap"></div>
 
     <!-- Top Floating Map HUD Controls -->
     <div class="absolute top-3 inset-x-3 z-10 flex items-center justify-between pointer-events-none">
@@ -277,20 +150,20 @@
 
       <!-- Tile Switcher: Google Streets vs Google Hybrid -->
       <div class="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-2xl p-1 flex space-x-1 text-xs font-bold shadow-xl">
-        <button onclick="setMapTile('googleStreets')" id="btnTileStreets" class="px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold transition">🚗 Streets</button>
-        <button onclick="setMapTile('googleHybrid')" id="btnTileHybrid" class="px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-bold transition">🛰️ Hybrid</button>
+        <button onclick="setMapTile('streets')" id="btnTileStreets" class="px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold transition">🚗 Streets</button>
+        <button onclick="setMapTile('satellite')" id="btnTileHybrid" class="px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-bold transition">🛰️ Hybrid</button>
       </div>
     </div>
 
     <!-- Center-GPS Floating Button -->
-    <button onclick="centerMapOnUserLocation()" title="Locate My Position" class="absolute top-16 right-3 z-10 w-10 h-10 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-800 text-white flex items-center justify-center shadow-xl hover:bg-slate-800 active:scale-95 transition">
+    <button onclick="centerMapOnUserLocation()" title="Locate My Position" class="absolute top-16 right-3 z-10 w-11 h-11 rounded-2xl bg-slate-900/95 backdrop-blur-md border border-slate-700 text-white flex items-center justify-center shadow-2xl hover:bg-slate-800 active:scale-95 transition">
       <i data-lucide="crosshair" class="w-5 h-5 text-blue-400"></i>
     </button>
 
-    <!-- 4. BOTTOM TELEMETRY HUD & ACTION CONTROL SHEET -->
-    <div id="bottomControlSheet" class="absolute bottom-0 inset-x-0 z-20 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 rounded-t-3xl shadow-2xl p-3.5 space-y-3 transition-transform duration-300">
+    <!-- Bottom Telemetry HUD & Action Control Sheet -->
+    <div id="bottomControlSheet" class="absolute bottom-0 inset-x-0 z-20 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 rounded-t-3xl shadow-2xl p-3.5 space-y-3">
       
-      <!-- Telemetry Stats Cards (Distance, Duration, Live Speed) -->
+      <!-- Telemetry Stats Cards -->
       <div class="grid grid-cols-3 gap-2 text-center">
         <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-2">
           <span class="text-[10px] text-slate-400 font-bold uppercase block tracking-wider">Distance</span>
@@ -308,28 +181,28 @@
         </div>
       </div>
 
-      <!-- Action Buttons (Start, Stop, Check In, +3KM Test) -->
+      <!-- Action Buttons -->
       <div class="grid grid-cols-3 gap-2">
-        <!-- Start / Resume Button -->
+        <!-- Start Button -->
         <button onclick="startAgentTracking()" id="btnAgentStart" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-500/25 active:scale-95 transition">
           <i data-lucide="play" class="w-4 h-4 fill-current"></i>
           <span>START DUTY</span>
         </button>
 
-        <!-- Stop / Pause Button -->
+        <!-- Stop Button -->
         <button onclick="stopAgentTracking()" id="btnAgentStop" class="bg-slate-800 text-slate-500 font-bold py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 border border-slate-700 active:scale-95 transition opacity-60">
           <i data-lucide="square" class="w-4 h-4 fill-current"></i>
           <span>STOP</span>
         </button>
 
-        <!-- Live Check In Button -->
+        <!-- Check In Button -->
         <button onclick="performAgentCheckIn()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-blue-600/25 active:scale-95 transition">
           <i data-lucide="map-pin" class="w-4 h-4"></i>
           <span>CHECK IN</span>
         </button>
       </div>
 
-      <!-- Visited Locations & Milestones Collapse Header -->
+      <!-- Visited Milestones Container -->
       <div class="space-y-1.5">
         <div class="flex items-center justify-between text-xs px-1">
           <span class="font-bold text-slate-300 flex items-center space-x-1">
@@ -338,7 +211,6 @@
           <span id="milestoneCountText" class="text-[11px] font-mono text-emerald-400 font-bold">0 Logged</span>
         </div>
 
-        <!-- Scrollable Milestone List -->
         <div id="visitedLocationsScrollBox" class="max-h-[90px] overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
           <div class="text-center py-2 text-xs text-slate-500 font-medium">
             No milestones logged yet. Tap <strong class="text-emerald-400">START DUTY</strong> or <strong class="text-blue-400">CHECK IN</strong>.
@@ -350,9 +222,129 @@
 
   </main>
 
+  <!-- =========================================================================
+       3. ONBOARDING & PROFILE SETUP MODAL
+  ========================================================================= -->
+  <div id="loginScreenModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[99999] p-4 items-center justify-center" style="display: none;">
+    <div class="bg-slate-900 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-800 relative max-h-[92vh] overflow-y-auto custom-scrollbar">
+      
+      <div class="text-center mb-4">
+        <div class="w-12 h-12 bg-blue-600 text-white rounded-2xl mx-auto flex items-center justify-center font-black text-2xl shadow-lg shadow-blue-600/30 mb-2">
+          FTP
+        </div>
+        <h2 class="font-extrabold text-xl text-white tracking-tight">Field Worker Registration</h2>
+        <p class="text-xs text-slate-400 mt-0.5">Please register your employee profile once to begin tracking.</p>
+      </div>
+
+      <form id="onboardingForm" onsubmit="handleOnboardingSubmit(event)" class="space-y-3.5">
+        <div>
+          <label class="text-xs font-bold text-slate-300 block mb-1">Your Full Name <span class="text-rose-400">*</span></label>
+          <input type="text" id="setupName" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 text-sm focus:outline-none focus:border-blue-500 text-white bg-slate-950" placeholder="e.g. Rahul Sharma">
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-300 block mb-1">Email / Employee ID <span class="text-rose-400">*</span></label>
+          <input type="text" id="setupEmail" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 text-sm focus:outline-none focus:border-blue-500 text-white bg-slate-950" placeholder="e.g. rahul.sharma@company.com">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-300 block mb-1">Vehicle Type</label>
+            <select id="setupVehicleType" class="w-full px-3 py-2.5 rounded-xl border border-slate-700 text-xs focus:outline-none focus:border-blue-500 text-white bg-slate-950 font-bold">
+              <option value="Bike">🏍️ Bike / Two-Wheeler</option>
+              <option value="Scooter">🛵 Scooter (110cc)</option>
+              <option value="Car">🚗 Car / Four-Wheeler</option>
+              <option value="EV">⚡ EV Scooter</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-300 block mb-1">Vehicle Number</label>
+            <input type="text" id="setupVehicleNo" class="w-full px-3 py-2.5 rounded-xl border border-slate-700 text-xs focus:outline-none focus:border-blue-500 text-white bg-slate-950 font-mono" placeholder="e.g. AS-01-AB-1234">
+          </div>
+        </div>
+
+        <!-- Photo Capture / Upload Section -->
+        <div>
+          <label class="text-xs font-bold text-slate-300 block mb-1.5">Profile Photo (Map Pin Avatar)</label>
+          <div class="flex items-center space-x-3.5">
+            <div class="relative shrink-0">
+              <img id="setupPhotoPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Agent Photo" class="w-14 h-14 rounded-full object-cover border-2 border-emerald-500 shadow-md">
+              <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900 absolute bottom-0 right-0"></span>
+            </div>
+
+            <div class="flex-1 space-y-1.5">
+              <button type="button" onclick="openLiveCameraModal()" class="w-full bg-blue-950/60 hover:bg-blue-900 text-blue-300 text-xs font-bold py-2 px-3 rounded-xl border border-blue-800 flex items-center justify-center space-x-1.5 transition active:scale-95">
+                <i data-lucide="camera" class="w-4 h-4"></i>
+                <span>Take Live Selfie (Camera)</span>
+              </button>
+              
+              <button type="button" onclick="triggerDeviceUpload()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2 px-3 rounded-xl border border-slate-700 flex items-center justify-center space-x-1.5 cursor-pointer transition active:scale-95">
+                <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
+                <span>Upload From Gallery / Files</span>
+              </button>
+              <input type="file" id="fileUploadInput" accept="image/*" onchange="handleFileUpload(event)" style="display:none;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Permissions Checklist -->
+        <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <p class="text-[11px] font-extrabold text-slate-300 uppercase tracking-wider">
+              🛡️ One-Time Permissions
+            </p>
+            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">Never Prompts Again</span>
+          </div>
+
+          <div class="space-y-1.5 text-xs text-slate-400">
+            <div class="flex items-center justify-between p-2 bg-slate-900 rounded-xl border border-slate-800">
+              <span class="text-blue-400 font-bold">📍 GPS ("Allow all the time")</span>
+              <button type="button" onclick="requestInitialLocationPermission()" id="permBtnLoc" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-[11px]">
+                Grant GPS
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between p-2 bg-slate-900 rounded-xl border border-slate-800">
+              <span class="text-emerald-400 font-bold">📷 Camera & Storage</span>
+              <button type="button" onclick="grantCameraAndStoragePermission()" id="permBtnCam" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px]">
+                Grant Access
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center space-x-2 shadow-lg shadow-blue-600/30 transition mt-2">
+          <span>Save Profile & Start Tracking</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Camera Capture Modal -->
+  <div id="cameraModal" class="fixed inset-0 bg-black/90 z-[100000] p-4 items-center justify-center" style="display: none;">
+    <div class="bg-slate-900 rounded-3xl p-5 max-w-sm w-full text-center space-y-4 border border-slate-800">
+      <h3 class="font-bold text-white text-sm">Take Agent Profile Photo</h3>
+      <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-inner flex items-center justify-center">
+        <video id="cameraVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+        <canvas id="cameraCanvas" class="hidden"></canvas>
+      </div>
+      <div class="flex items-center justify-center space-x-3">
+        <button onclick="captureCameraPhoto()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-emerald-500/30 transition">
+          <i data-lucide="camera" class="w-4 h-4"></i>
+          <span>Capture Photo</span>
+        </button>
+        <button onclick="closeCameraModal()" class="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-700">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // =========================================================================
-    // STATE ENGINE (Crash-Proof, 100% Real Live Geolocation & Battery)
+    // FIELD TRACKER PRO - CORE ENGINE
     // =========================================================================
     const STORAGE_KEY_PROFILE = 'fieldpulse_agent_profile';
     const STORAGE_KEY_ACTIVE_ROUTE = 'fieldpulse_live_route';
@@ -394,12 +386,55 @@
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('currentDateBadge').innerText = todayDisplay;
       lucide.createIcons();
+      initMasterMap();
       initRealBatteryMonitoring();
       loadStoredProfileAndState();
     });
 
     // =========================================================================
-    // REAL BATTERY MONITORING (Live navigator.getBattery)
+    // LEAFLET MAP INITIALIZATION (Standard OpenStreetMap + Google Tiles)
+    // =========================================================================
+    function initMasterMap() {
+      if (masterMap) return;
+      
+      masterMap = L.map('masterAppMap', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([26.1875, 91.7380], 15);
+
+      // Default OpenStreetMap high-availability tiles
+      masterTileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+      }).addTo(masterMap);
+
+      L.control.zoom({ position: 'topleft' }).addTo(masterMap);
+
+      setTimeout(() => {
+        if (masterMap) masterMap.invalidateSize();
+      }, 300);
+    }
+
+    function setMapTile(type) {
+      if (!masterMap) return;
+      if (masterTileLayer) masterMap.removeLayer(masterTileLayer);
+
+      if (type === 'satellite') {
+        masterTileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 19
+        }).addTo(masterMap);
+        document.getElementById('btnTileHybrid').className = 'px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold transition';
+        document.getElementById('btnTileStreets').className = 'px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-bold transition';
+      } else {
+        masterTileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(masterMap);
+        document.getElementById('btnTileStreets').className = 'px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold transition';
+        document.getElementById('btnTileHybrid').className = 'px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-bold transition';
+      }
+    }
+
+    // =========================================================================
+    // REAL BATTERY MONITORING
     // =========================================================================
     async function initRealBatteryMonitoring() {
       const batText = document.getElementById('agentBatteryText');
@@ -417,7 +452,7 @@
           battery.addEventListener('levelchange', updateBatteryUI);
           battery.addEventListener('chargingchange', updateBatteryUI);
         } catch (e) {
-          console.warn("Battery API:", e.message);
+          console.warn(e);
         }
       } else {
         if (batText) batText.innerText = `100%`;
@@ -426,7 +461,7 @@
     }
 
     // =========================================================================
-    // ONBOARDING & PROFILE SETUP
+    // ONBOARDING & PROFILE STATE
     // =========================================================================
     function loadStoredProfileAndState() {
       const storedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
@@ -436,27 +471,27 @@
       if (storedProfile && isGranted === 'true') {
         try {
           const parsed = JSON.parse(storedProfile);
-          // If legacy dummy name exists in user's phone localStorage, purge it to show clean fresh registration!
           if (!parsed.name || parsed.name === "Dinesh Kumar Singh" || parsed.email === "dinesh.singh@dhanpurna.net") {
             localStorage.removeItem(STORAGE_KEY_PROFILE);
             localStorage.removeItem('fieldpulse_permissions_granted');
             localStorage.removeItem(STORAGE_KEY_ACTIVE_ROUTE);
-            if (loginModal) loginModal.classList.remove('hidden');
-            initAppEngine();
+            if (loginModal) loginModal.style.display = 'flex';
+            locateUserInitialPosition();
             return;
           }
 
           state.profile = parsed;
-          if (loginModal) loginModal.classList.add('hidden');
+          if (loginModal) loginModal.style.display = 'none';
           applyProfileToUI();
-          initAppEngine();
+          restoreSavedLiveSession();
+          locateUserInitialPosition();
         } catch (e) {
-          if (loginModal) loginModal.classList.remove('hidden');
-          initAppEngine();
+          if (loginModal) loginModal.style.display = 'flex';
+          locateUserInitialPosition();
         }
       } else {
-        if (loginModal) loginModal.classList.remove('hidden');
-        initAppEngine();
+        if (loginModal) loginModal.style.display = 'flex';
+        locateUserInitialPosition();
       }
     }
 
@@ -490,11 +525,10 @@
         photoUrl: photoUrl
       };
 
-      // Save permanently in localStorage so it NEVER asks again once stored!
       localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(state.profile));
       localStorage.setItem('fieldpulse_permissions_granted', 'true');
 
-      document.getElementById('loginScreenModal').classList.add('hidden');
+      document.getElementById('loginScreenModal').style.display = 'none';
       applyProfileToUI();
       centerMapOnUserLocation();
     }
@@ -504,7 +538,7 @@
       document.getElementById('setupEmail').value = state.profile.email || '';
       document.getElementById('setupVehicleNo').value = state.profile.vehicleNo || '';
       if (state.profile.vehicleType) document.getElementById('setupVehicleType').value = state.profile.vehicleType;
-      document.getElementById('loginScreenModal').classList.remove('hidden');
+      document.getElementById('loginScreenModal').style.display = 'flex';
     }
 
     function requestInitialLocationPermission() {
@@ -518,73 +552,36 @@
             }
             state.lastLat = pos.coords.latitude;
             state.lastLng = pos.coords.longitude;
-            if (masterMap) masterMap.setView([state.lastLat, state.lastLng], 16);
+            if (masterMap) {
+              masterMap.setView([state.lastLat, state.lastLng], 16);
+              masterMap.invalidateSize();
+            }
           },
-          (err) => {
-            alert("Please allow Location permission in your browser/device settings.");
-          },
+          (err) => alert("Please allow Location permission in your phone settings."),
           { enableHighAccuracy: true, timeout: 8000 }
         );
-      }
-    }
-
-    // =========================================================================
-    // MAP & REAL GEOLOCATION INITIALIZATION
-    // =========================================================================
-    function initAppEngine() {
-      initMasterMap();
-      restoreSavedLiveSession();
-      locateUserInitialPosition();
-    }
-
-    function initMasterMap() {
-      if (masterMap) return;
-      masterMap = L.map('masterAppMap', { zoomControl: false }).setView([26.1875, 91.7380], 15);
-
-      masterTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-        maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
-      }).addTo(masterMap);
-
-      L.control.zoom({ position: 'topleft' }).addTo(masterMap);
-    }
-
-    function setMapTile(type) {
-      if (!masterMap) return;
-      if (masterTileLayer) masterMap.removeLayer(masterTileLayer);
-      if (type === 'googleHybrid') {
-        masterTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-          maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
-        }).addTo(masterMap);
-        document.getElementById('btnTileHybrid').className = 'px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold transition';
-        document.getElementById('btnTileStreets').className = 'px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-bold transition';
-      } else {
-        masterTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
-        }).addTo(masterMap);
-        document.getElementById('btnTileStreets').className = 'px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold transition';
-        document.getElementById('btnTileHybrid').className = 'px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-bold transition';
       }
     }
 
     function locateUserInitialPosition() {
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
-          async (pos) => {
+          (pos) => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
             state.lastLat = lat;
             state.lastLng = lng;
 
-            if (masterMap) masterMap.setView([lat, lng], 16);
+            if (masterMap) {
+              masterMap.setView([lat, lng], 16);
+              masterMap.invalidateSize();
+            }
 
-            // If no breadcrumbs exist yet, put clean initial position marker
             if (state.currentRoute.breadcrumbs.length === 0) {
               renderInitialPositionPin(lat, lng);
             }
           },
-          (err) => {
-            console.warn("Initial GPS lookup:", err.message);
-          },
+          (err) => console.warn("GPS initial lookup standby:", err.message),
           { enableHighAccuracy: true, timeout: 8000 }
         );
       }
@@ -598,9 +595,12 @@
             const lng = pos.coords.longitude;
             state.lastLat = lat;
             state.lastLng = lng;
-            if (masterMap) masterMap.setView([lat, lng], 17, { animate: true });
+            if (masterMap) {
+              masterMap.setView([lat, lng], 17, { animate: true });
+              masterMap.invalidateSize();
+            }
           },
-          (err) => alert("Could not fetch GPS. Please ensure Location is turned ON on your phone."),
+          (err) => alert("Could not fetch GPS. Please make sure Location is ON."),
           { enableHighAccuracy: true, timeout: 8000 }
         );
       }
@@ -629,13 +629,12 @@
     }
 
     // =========================================================================
-    // START, STOP, CHECK-IN & BACKGROUND GPS TRACKING
+    // START, STOP, CHECK-IN & BACKGROUND GPS
     // =========================================================================
     function startAgentTracking() {
       if (state.isTrackingActive) return;
       state.isTrackingActive = true;
 
-      // Update UI Buttons
       const btnStart = document.getElementById('btnAgentStart');
       const btnStop = document.getElementById('btnAgentStop');
       const pulse = document.getElementById('liveStatusPulse');
@@ -646,11 +645,9 @@
       pulse.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping';
       statusText.innerText = '🟢 Duty Active (Recording)';
 
-      // Save Start Time
       const startTime = Date.now() - (state.secondsElapsed * 1000);
       localStorage.setItem(STORAGE_KEY_TIMER, JSON.stringify({ isTrackingActive: true, startTime }));
 
-      // Start Real Timer
       if (state.timerInterval) clearInterval(state.timerInterval);
       state.timerInterval = setInterval(() => {
         state.secondsElapsed++;
@@ -662,12 +659,10 @@
         state.currentRoute.duration = durStr;
       }, 1000);
 
-      // Request Screen WakeLock so phone never sleeps tracking
       if ('wakeLock' in navigator) {
-        navigator.wakeLock.request('screen').catch(e => console.log(e));
+        navigator.wakeLock.request('screen').catch(() => {});
       }
 
-      // Initiate Continuous High Accuracy GPS Watcher
       initLiveGpsWatcher();
     }
 
@@ -698,10 +693,7 @@
 
     function initLiveGpsWatcher() {
       if (!('geolocation' in navigator)) return;
-
-      if (state.geoWatcherId !== null) {
-        navigator.geolocation.clearWatch(state.geoWatcherId);
-      }
+      if (state.geoWatcherId !== null) navigator.geolocation.clearWatch(state.geoWatcherId);
 
       state.geoWatcherId = navigator.geolocation.watchPosition(
         (pos) => handleNewGpsCoordinate(pos.coords.latitude, pos.coords.longitude, pos.coords.speed),
@@ -719,7 +711,6 @@
       const now = new Date();
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // First coordinate of the shift
       if (state.lastLat === null || state.lastLng === null) {
         state.lastLat = lat;
         state.lastLng = lng;
@@ -732,10 +723,7 @@
         return;
       }
 
-      // Calculate distance from previous point
       const distMeters = calculateHaversineMeters(state.lastLat, state.lastLng, lat, lng);
-
-      // Ignore stationary jitter (< 8 meters)
       if (distMeters < 8) return;
 
       state.currentRoute.totalDistanceKm = +(state.currentRoute.totalDistanceKm + (distMeters / 1000)).toFixed(2);
@@ -744,7 +732,6 @@
       state.lastLat = lat;
       state.lastLng = lng;
 
-      // Auto-milestone checkpoint every ~3.0 KM
       const distSinceLastMilestone = state.currentRoute.totalDistanceKm - (state.lastMilestoneKm || 0);
       if (distSinceLastMilestone >= 3.0) {
         state.lastMilestoneKm = state.currentRoute.totalDistanceKm;
@@ -759,7 +746,6 @@
           renderMilestoneList();
         });
       } else {
-        // Continuous road breadcrumb
         state.currentRoute.breadcrumbs.push({
           lat: lat, lng: lng,
           label: `Road Transit (${state.currentRoute.totalDistanceKm.toFixed(2)} km)`,
@@ -803,15 +789,15 @@
           renderMilestoneList();
           if (masterMap) masterMap.setView([lat, lng], 17, { animate: true });
 
-          alert(`✓ Check-In Logged successfully at:\n"${realAddr}" (${timeStr})`);
+          alert(`✓ Check-In Logged at:\n"${realAddr}" (${timeStr})`);
         },
-        (err) => alert("Could not fetch GPS for Check-In. Please ensure GPS is enabled."),
+        (err) => alert("Could not fetch GPS for Check-In. Please turn ON location."),
         { enableHighAccuracy: true, timeout: 8000 }
       );
     }
 
     // =========================================================================
-    // ROAD CURVE GEOMETRY SNAPPING (OpenStreetMap OSRM Router)
+    // MAP RENDERING
     // =========================================================================
     async function renderMapRoute() {
       if (!masterMap) return;
@@ -823,13 +809,12 @@
 
       const roadCoords = await fetchRoadGeometry(bcs);
 
-      // Glowing Emerald Green Road Polyline
       const polyline = L.polyline(roadCoords, {
         color: '#10b981', weight: 5, opacity: 0.9, lineCap: 'round', lineJoin: 'round'
       }).addTo(masterMap);
       mapLayers.push(polyline);
 
-      // Start Point 'S' Marker
+      // Start Point 'S'
       const startPt = bcs[0];
       const startIcon = L.divIcon({
         className: 'start-pin-wrapper',
@@ -840,7 +825,7 @@
       startMarker.bindPopup(`<strong>Start Point (S)</strong><br/>${startPt.label}`);
       mapLayers.push(startMarker);
 
-      // Current Location Pin with Circular Photo
+      // Current Location Pin
       const curPt = bcs[bcs.length - 1];
       const photoUrl = state.profile.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
       const curIcon = L.divIcon({
@@ -885,9 +870,7 @@
         if (data.code === 'Ok' && data.routes && data.routes[0]) {
           return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
         }
-      } catch (e) {
-        console.log("OSRM fallback smoothing");
-      }
+      } catch (e) {}
 
       return validPoints.map(p => [p.lat, p.lng]);
     }
@@ -942,7 +925,6 @@
     }
 
     function restoreSavedLiveSession() {
-      // Purge any legacy mock cache
       localStorage.removeItem('fieldpulse_date_routes');
       const saved = localStorage.getItem(STORAGE_KEY_ACTIVE_ROUTE);
       if (saved) {
@@ -1013,7 +995,7 @@
     async function openLiveCameraModal() {
       const modal = document.getElementById('cameraModal');
       const video = document.getElementById('cameraVideo');
-      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
 
       try {
         videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
@@ -1049,7 +1031,7 @@
         videoStream.getTracks().forEach(t => t.stop());
         videoStream = null;
       }
-      document.getElementById('cameraModal').classList.add('hidden');
+      document.getElementById('cameraModal').style.display = 'none';
     }
 
     function handleFileUpload(event) {
