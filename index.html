@@ -3,13 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>InnBuilt FieldPulse - Real-Time Workforce GPS & Attendance</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Field Tracker Pro - Live GPS & Attendance</title>
+  
+  <script>
+    // Force purge old PWA service worker caches so mobile users get latest changes instantly
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (let name of names) caches.delete(name);
+      });
+    }
+  </script>
+
   <!-- PWA Mobile App Support -->
   <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="FieldPulse">
-  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-title" content="FieldTrackerPro">
+  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
   
@@ -410,16 +430,23 @@
     // =========================================================================
     function loadStoredProfileAndState() {
       const storedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
-      const loginModal = document.getElementById('loginScreenModal');
-
-    function loadStoredProfileAndState() {
-      const storedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
       const isGranted = localStorage.getItem('fieldpulse_permissions_granted');
       const loginModal = document.getElementById('loginScreenModal');
 
       if (storedProfile && isGranted === 'true') {
         try {
-          state.profile = JSON.parse(storedProfile);
+          const parsed = JSON.parse(storedProfile);
+          // If legacy dummy name exists in user's phone localStorage, purge it to show clean fresh registration!
+          if (!parsed.name || parsed.name === "Dinesh Kumar Singh" || parsed.email === "dinesh.singh@dhanpurna.net") {
+            localStorage.removeItem(STORAGE_KEY_PROFILE);
+            localStorage.removeItem('fieldpulse_permissions_granted');
+            localStorage.removeItem(STORAGE_KEY_ACTIVE_ROUTE);
+            if (loginModal) loginModal.classList.remove('hidden');
+            initAppEngine();
+            return;
+          }
+
+          state.profile = parsed;
           if (loginModal) loginModal.classList.add('hidden');
           applyProfileToUI();
           initAppEngine();
