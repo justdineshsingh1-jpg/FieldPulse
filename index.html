@@ -2,146 +2,134 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>InnBuilt Industrial - Field Agent Tracking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>InnBuilt FieldPulse - Real-Time Workforce GPS & Attendance</title>
   <!-- PWA Mobile App Support -->
-  <meta name="theme-color" content="#1e3a8a">
+  <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="FieldTracker">
+  <meta name="apple-mobile-web-app-title" content="FieldPulse">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
   
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS & Lucide -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+    }
     code, .font-mono { font-family: 'JetBrains Mono', monospace; }
     
     .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
     @keyframes haloPulse {
       0% { transform: scale(0.85); opacity: 0.8; }
-      70% { transform: scale(1.35); opacity: 0; }
-      100% { transform: scale(1.35); opacity: 0; }
+      70% { transform: scale(1.4); opacity: 0; }
+      100% { transform: scale(1.4); opacity: 0; }
     }
     .agent-circle-pin {
-      width: 44px !important;
-      height: 44px !important;
-      border-radius: 50% !important;
-      position: relative !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
+      width: 44px !important; height: 44px !important;
+      border-radius: 50% !important; position: relative !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
     }
     .agent-circle-pin img {
-      width: 36px !important;
-      height: 36px !important;
-      border-radius: 50% !important;
-      object-fit: cover !important;
+      width: 38px !important; height: 38px !important;
+      border-radius: 50% !important; object-fit: cover !important;
       border: 2.5px solid #10b981 !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-      position: relative !important;
-      z-index: 10 !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+      position: relative !important; z-index: 10 !important;
     }
     .start-circle-pin {
-      width: 28px !important;
-      height: 28px !important;
-      border-radius: 50% !important;
-      background: #10b981 !important;
-      color: #ffffff !important;
-      font-weight: 900 !important;
-      font-size: 11px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      border: 2px solid #ffffff !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+      width: 28px !important; height: 28px !important;
+      border-radius: 50% !important; background: #10b981 !important;
+      color: #ffffff !important; font-weight: 900 !important; font-size: 11px !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
+      border: 2px solid #ffffff !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
     }
     .radar-pulse-ring {
-      position: absolute !important;
-      width: 44px !important;
-      height: 44px !important;
-      border-radius: 50% !important;
-      background: rgba(16, 185, 129, 0.35) !important;
+      position: absolute !important; width: 44px !important; height: 44px !important;
+      border-radius: 50% !important; background: rgba(16, 185, 129, 0.35) !important;
       border: 2px solid #10b981 !important;
       animation: haloPulse 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
-      pointer-events: none !important;
-      z-index: 1 !important;
+      pointer-events: none !important; z-index: 1 !important;
     }
-    #agentMiniMap, #expandedFullMap, #commandMap { width: 100%; height: 100%; border-radius: 0.5rem; }
     .leaflet-popup-content { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-950 text-slate-100 h-screen w-screen flex flex-col antialiased select-none">
 
   <!-- =========================================================================
-       1. ONE-TIME LOGIN & SETUP ONBOARDING MODAL / SCREEN
-       ========================================================================= -->
-  <div id="loginScreenModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-white text-slate-900 w-full max-w-md rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+       1. FIRST-TIME EMPLOYEE ONBOARDING & PERMISSION SETUP WIZARD
+  ========================================================================= -->
+  <div id="loginScreenModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[99999] hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-800 relative max-h-[92vh] overflow-y-auto custom-scrollbar">
       
       <div class="text-center mb-5">
         <div class="w-12 h-12 bg-blue-600 text-white rounded-2xl mx-auto flex items-center justify-center font-black text-2xl shadow-lg shadow-blue-600/30 mb-2.5">
           IB
         </div>
-        <h2 class="font-extrabold text-xl text-slate-900 tracking-tight">Field Agent Profile & Permissions</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Please register your employee profile and grant background permissions.</p>
+        <h2 class="font-extrabold text-xl text-white tracking-tight">Field Worker Registration</h2>
+        <p class="text-xs text-slate-400 mt-0.5">Please setup your profile to start recording real GPS road routes.</p>
       </div>
 
       <form id="onboardingForm" onsubmit="handleOnboardingSubmit(event)" class="space-y-4">
         <div>
-          <label class="text-xs font-bold text-slate-700 block mb-1">Your Full Name <span class="text-rose-500">*</span></label>
-          <input type="text" id="setupName" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-blue-600 text-slate-900 bg-slate-50" placeholder="e.g. Rakesh Barua" value="">
+          <label class="text-xs font-bold text-slate-300 block mb-1">Your Full Name <span class="text-rose-400">*</span></label>
+          <input type="text" id="setupName" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 text-sm focus:outline-none focus:border-blue-500 text-white bg-slate-950" placeholder="e.g. Rahul Sharma" value="">
         </div>
 
         <div>
-          <label class="text-xs font-bold text-slate-700 block mb-1">Email ID / Employee ID <span class="text-rose-500">*</span></label>
-          <input type="email" id="setupEmail" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-blue-600 text-slate-900 bg-slate-50" placeholder="e.g. rakesh.barua@company.com" value="">
+          <label class="text-xs font-bold text-slate-300 block mb-1">Email / Employee ID <span class="text-rose-400">*</span></label>
+          <input type="text" id="setupEmail" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-700 text-sm focus:outline-none focus:border-blue-500 text-white bg-slate-950" placeholder="e.g. rahul.sharma@company.com" value="">
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="text-xs font-bold text-slate-700 block mb-1">Vehicle Type</label>
-            <select id="setupVehicleType" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-600 text-slate-900 bg-slate-50 font-bold">
-              <option value="Bike">🏍️ Bike (Two-Wheeler)</option>
+            <label class="text-xs font-bold text-slate-300 block mb-1">Vehicle Type</label>
+            <select id="setupVehicleType" class="w-full px-3 py-2.5 rounded-xl border border-slate-700 text-xs focus:outline-none focus:border-blue-500 text-white bg-slate-950 font-bold">
+              <option value="Bike">🏍️ Bike / Two-Wheeler</option>
               <option value="Scooter">🛵 Scooter (110cc)</option>
-              <option value="Car">🚗 Car (Four-Wheeler)</option>
+              <option value="Car">🚗 Car / Four-Wheeler</option>
               <option value="EV">⚡ EV Scooter</option>
             </select>
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-700 block mb-1">Vehicle Number</label>
-            <input type="text" id="setupVehicleNo" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-600 text-slate-900 bg-slate-50 font-mono" placeholder="e.g. AS-01-AB-1234">
+            <label class="text-xs font-bold text-slate-300 block mb-1">Vehicle Number</label>
+            <input type="text" id="setupVehicleNo" class="w-full px-3 py-2.5 rounded-xl border border-slate-700 text-xs focus:outline-none focus:border-blue-500 text-white bg-slate-950 font-mono" placeholder="e.g. AS-01-AB-1234">
           </div>
         </div>
 
         <!-- Photo Capture / Camera Section -->
         <div>
-          <label class="text-xs font-bold text-slate-700 block mb-1.5">Profile Photo (Shown as Live Map Pin) <span class="text-rose-500">*</span></label>
+          <label class="text-xs font-bold text-slate-300 block mb-1.5">Profile Photo (Shown as Live Map Pin)</label>
           <div class="flex items-center space-x-4">
             <div class="relative">
               <img id="setupPhotoPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Agent Photo" class="w-14 h-14 rounded-full object-cover border-2 border-emerald-500 shadow-md">
-              <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white absolute bottom-0 right-0"></span>
+              <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900 absolute bottom-0 right-0"></span>
             </div>
 
             <div class="flex-1 space-y-1.5">
-              <button type="button" onclick="openLiveCameraModal()" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold py-2 px-3 rounded-xl border border-blue-200 flex items-center justify-center space-x-1.5 transition">
+              <button type="button" onclick="openLiveCameraModal()" class="w-full bg-blue-950/60 hover:bg-blue-900 text-blue-300 text-xs font-bold py-2 px-3 rounded-xl border border-blue-800 flex items-center justify-center space-x-1.5 transition">
                 <i data-lucide="camera" class="w-4 h-4"></i>
                 <span>Take Live Selfie (Camera)</span>
               </button>
               
-              <label class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-1.5 px-3 rounded-xl border border-slate-200 flex items-center justify-center space-x-1.5 cursor-pointer transition">
+              <label class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-1.5 px-3 rounded-xl border border-slate-700 flex items-center justify-center space-x-1.5 cursor-pointer transition">
                 <i data-lucide="upload" class="w-3.5 h-3.5"></i>
                 <span>Upload From Device</span>
                 <input type="file" id="fileUploadInput" accept="image/*" capture="user" onchange="handleFileUpload(event)" class="hidden">
@@ -151,45 +139,38 @@
         </div>
 
         <!-- Android Background & Hardware Permissions Checklist -->
-        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-          <p class="text-[11px] font-extrabold text-slate-800 uppercase tracking-wider flex items-center space-x-1">
+        <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+          <p class="text-[11px] font-extrabold text-slate-300 uppercase tracking-wider flex items-center space-x-1">
             <span>🛡️ Required Android Permissions</span>
           </p>
 
-          <div class="space-y-1.5 text-xs text-slate-600">
-            <div class="flex items-center justify-between p-1.5 bg-white rounded-xl border border-slate-200">
+          <div class="space-y-1.5 text-xs text-slate-400">
+            <div class="flex items-center justify-between p-2 bg-slate-900 rounded-xl border border-slate-800">
               <div class="flex items-center space-x-2">
-                <span class="text-blue-600 font-bold">📍 Location ("Allow all the time")</span>
+                <span class="text-blue-400 font-bold">📍 Location ("Allow all the time")</span>
               </div>
               <button type="button" onclick="requestInitialLocationPermission()" id="permBtnLoc" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-[11px]">
                 Grant GPS
               </button>
             </div>
 
-            <div class="flex items-center justify-between p-1.5 bg-white rounded-xl border border-slate-200">
+            <div class="flex items-center justify-between p-2 bg-slate-900 rounded-xl border border-slate-800">
               <div class="flex items-center space-x-2">
-                <span class="text-emerald-600 font-bold">📷 Camera Access</span>
+                <span class="text-emerald-400 font-bold">📷 Camera Access</span>
               </div>
               <button type="button" onclick="openLiveCameraModal()" id="permBtnCam" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px]">
                 Grant Camera
               </button>
             </div>
-
-            <div class="flex items-center justify-between p-1.5 bg-white rounded-xl border border-slate-200">
-              <div class="flex items-center space-x-2">
-                <span class="text-amber-700 font-bold">🔋 Screen-Off Background Persistence</span>
-              </div>
-              <span class="text-[11px] font-bold text-emerald-600">✓ Enabled</span>
-            </div>
           </div>
 
-          <p class="text-[10px] text-slate-500 leading-tight">
-            ℹ️ When Android asks for Location, select <strong class="text-slate-800">"Allow all the time"</strong> so the app records road distance even when the screen is off.
+          <p class="text-[10px] text-slate-400 leading-tight">
+            ℹ️ When Android prompts for Location, select <strong class="text-white">"Allow all the time"</strong> so GPS tracks road distance even when the screen is off.
           </p>
         </div>
 
-        <button type="submit" class="w-full bg-[#1e3a8a] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center space-x-2 shadow-lg shadow-blue-900/30 transition mt-4">
-          <span>Start Real-Time Field Tracking</span>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center space-x-2 shadow-lg shadow-blue-600/30 transition mt-4">
+          <span>Start Real-Time Tracking</span>
           <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </button>
       </form>
@@ -198,7 +179,7 @@
   </div>
 
   <!-- Camera Capture Modal -->
-  <div id="cameraModal" class="fixed inset-0 bg-black/90 z-[60] hidden flex flex-col items-center justify-center p-4">
+  <div id="cameraModal" class="fixed inset-0 bg-black/90 z-[100000] hidden flex flex-col items-center justify-center p-4">
     <div class="bg-slate-900 rounded-3xl p-5 max-w-sm w-full text-center space-y-4 border border-slate-800">
       <h3 class="font-bold text-white text-sm">Take Agent Profile Photo</h3>
       <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-inner flex items-center justify-center">
@@ -217,198 +198,124 @@
     </div>
   </div>
 
-  <!-- Admin Password Authentication Modal -->
-  <div id="adminAuthModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[70] hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 text-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-800 relative space-y-4">
-      <div class="text-center space-y-2">
-        <div class="w-12 h-12 bg-blue-600/20 border border-blue-500/40 text-blue-400 rounded-2xl mx-auto flex items-center justify-center text-xl shadow-lg">
-          🔒
-        </div>
-        <h3 class="font-extrabold text-base text-white tracking-tight">Admin Authorization Required</h3>
-        <p class="text-xs text-slate-400">Enter supervisor PIN/password to access Fleet Command Hub</p>
-      </div>
-
-      <div class="space-y-3">
-        <div>
-          <label class="block text-[11px] font-bold text-slate-300 mb-1">Admin Password</label>
-          <input type="password" id="adminPasswordInput" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-center tracking-widest font-mono text-sm" onkeydown="if(event.key==='Enter') submitAdminPassword()">
-          <p id="adminAuthError" class="text-rose-400 text-[11px] font-semibold mt-1.5 hidden text-center">✕ Incorrect Password. Please try again.</p>
-        </div>
-
-        <div class="flex space-x-2 pt-1">
-          <button onclick="closeAdminAuthModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition border border-slate-700">
-            Cancel
-          </button>
-          <button onclick="submitAdminPassword()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg shadow-blue-600/30 transition">
-            Unlock Hub
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- =========================================================================
-       2. TOP GLOBAL HEADER (InnBuilt Suite)
-       ========================================================================= -->
-  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-    <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow">
-        IB
+       2. FULL-SCREEN EDGE-TO-EDGE APPLICATION LAYOUT
+  ========================================================================= -->
+  
+  <!-- Top App Header -->
+  <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 z-30 px-3.5 py-2.5 flex items-center justify-between shrink-0">
+    <div class="flex items-center space-x-2.5 min-w-0">
+      <div class="relative shrink-0" onclick="openProfileEditModal()" title="Edit Profile">
+        <img id="agentHeaderPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="w-8 h-8 rounded-full object-cover border-2 border-emerald-500 cursor-pointer">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-slate-900 absolute bottom-0 right-0"></span>
       </div>
-      <div>
-        <div class="flex items-center space-x-2">
-          <h1 class="font-black text-sm text-white tracking-tight">InnBuilt Industrial</h1>
-          <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-mono">Assam PWD</span>
+      <div class="min-w-0" onclick="openProfileEditModal()">
+        <h2 id="agentHeaderName" class="font-extrabold text-xs sm:text-sm text-white truncate leading-tight">Field Agent</h2>
+        <div class="flex items-center space-x-1.5 text-[10px] text-slate-400">
+          <span id="agentHeaderEmail" class="truncate">Active Duty</span>
+          <span class="text-slate-600">·</span>
+          <span id="currentDateBadge" class="text-blue-400 font-mono font-bold">Today</span>
         </div>
-        <p class="text-[11px] text-slate-400">Live Agent Traversal & Visited Locations</p>
       </div>
     </div>
 
-    <!-- Actions, Mode Switcher & Profile Switcher -->
-    <div class="flex items-center space-x-2">
-      <!-- Dual Mode View Switcher: Field Agent vs Admin Command Hub -->
-      <div class="bg-slate-800 p-1 rounded-xl flex items-center border border-slate-700 text-xs font-bold shadow-inner">
-        <button onclick="switchAppView('agent')" id="navBtnAgent" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white flex items-center space-x-1 transition shadow">
-          <span>📱 Agent View</span>
-        </button>
-        <button onclick="switchAppView('admin')" id="navBtnAdmin" class="px-2.5 py-1 rounded-lg text-slate-300 hover:text-white flex items-center space-x-1 transition">
-          <span>🖥️ Admin Hub</span>
-        </button>
+    <!-- Battery, Mode & Hub Actions -->
+    <div class="flex items-center space-x-2 shrink-0">
+      <!-- Live Real Battery Indicator -->
+      <div id="agentBatteryBadge" class="flex items-center space-x-1 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 text-xs font-mono font-bold text-emerald-400 shadow-sm">
+        <span id="agentBatteryIcon">🔋</span>
+        <span id="agentBatteryText">--%</span>
       </div>
 
-      <!-- Movement Indicator Badge -->
-      <div id="liveMovementStatusBadge" class="hidden sm:flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-halo"></span>
-        <span id="movementStatusText">🟢 Live Movement (5.6 km/h)</span>
-      </div>
-
-      <!-- Export Daily Report Button -->
-      <button onclick="exportDailyReport()" title="Download Official Field Traversal & Attendance Report" class="p-1.5 bg-blue-900/60 hover:bg-blue-800 text-blue-200 rounded-xl border border-blue-700 text-xs flex items-center space-x-1 transition">
-        <i data-lucide="download" class="w-4 h-4 text-blue-400"></i>
-        <span class="hidden md:inline">Export Report</span>
-      </button>
-
-      <!-- Edit Profile / Switch Account Button -->
-      <button onclick="openProfileEditModal()" title="Edit Profile / Switch Agent" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 text-xs flex items-center space-x-1">
-        <i data-lucide="user-cog" class="w-4 h-4"></i>
-        <span class="hidden md:inline">Edit Profile</span>
-      </button>
+      <!-- Admin Hub Direct Link -->
+      <a href="admin.html" class="px-2.5 py-1 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold flex items-center space-x-1 transition">
+        <span>🖥️ Admin</span>
+      </a>
     </div>
   </header>
 
-  <!-- =========================================================================
-       3. MAIN AGENT SCREEN (MATCHING IMAGE 1 & IMAGE 2)
-       ========================================================================= -->
-  <main id="agentViewContainer" class="flex-1 p-3 sm:p-6 max-w-md w-full mx-auto space-y-3">
+  <!-- 3. FULL-BLEED MASTER GIS MAP (Fills 100% Screen Height) -->
+  <main class="flex-1 w-full relative overflow-hidden flex flex-col">
     
-    <!-- Mobile Device Frame Container (Matching Image 1) -->
-    <div class="bg-white text-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-300 flex flex-col font-sans relative">
+    <!-- Full-Screen Interactive Leaflet Map Container -->
+    <div id="masterAppMap" class="w-full h-full absolute inset-0 z-0"></div>
+
+    <!-- Top Floating Map HUD Controls -->
+    <div class="absolute top-3 inset-x-3 z-10 flex items-center justify-between pointer-events-none">
+      <!-- Live Status Pill -->
+      <div class="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-800 text-white px-3 py-1.5 rounded-2xl text-xs font-bold flex items-center space-x-2 shadow-xl">
+        <span id="liveStatusPulse" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+        <span id="movementStatusText">Standby (Tap Start)</span>
+      </div>
+
+      <!-- Tile Switcher: Google Streets vs Google Hybrid -->
+      <div class="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-2xl p-1 flex space-x-1 text-xs font-bold shadow-xl">
+        <button onclick="setMapTile('googleStreets')" id="btnTileStreets" class="px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold transition">🚗 Streets</button>
+        <button onclick="setMapTile('googleHybrid')" id="btnTileHybrid" class="px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-bold transition">🛰️ Hybrid</button>
+      </div>
+    </div>
+
+    <!-- Center-GPS Floating Button -->
+    <button onclick="centerMapOnUserLocation()" title="Locate My Position" class="absolute top-16 right-3 z-10 w-10 h-10 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-800 text-white flex items-center justify-center shadow-xl hover:bg-slate-800 active:scale-95 transition">
+      <i data-lucide="crosshair" class="w-5 h-5 text-blue-400"></i>
+    </button>
+
+    <!-- 4. BOTTOM TELEMETRY HUD & ACTION CONTROL SHEET -->
+    <div id="bottomControlSheet" class="absolute bottom-0 inset-x-0 z-20 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 rounded-t-3xl shadow-2xl p-3.5 space-y-3 transition-transform duration-300">
       
-      <!-- Top Header Bar (Deep Blue Banner) -->
-      <div class="bg-[#1e3a8a] text-white px-4 py-3 flex items-center justify-between shadow-md">
-        <div class="flex items-center space-x-3">
-          <div class="relative">
-            <img id="agentHeaderPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Agent Photo" class="w-8 h-8 rounded-full object-cover border border-white shadow">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white absolute bottom-0 right-0"></span>
-          </div>
-          <div>
-            <h2 id="agentHeaderName" class="font-extrabold text-sm text-white tracking-tight leading-tight">Welcome, Dinesh Kumar Singh</h2>
-            <p id="agentHeaderEmail" class="text-[11px] text-blue-200 font-normal">dinesh.singh@dhanpurna.net</p>
-          </div>
+      <!-- Telemetry Stats Cards (Distance, Duration, Live Speed) -->
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-2">
+          <span class="text-[10px] text-slate-400 font-bold uppercase block tracking-wider">Distance</span>
+          <strong id="agentDistanceText" class="text-base sm:text-lg font-black text-white font-mono">0.00 km</strong>
         </div>
-        <div id="agentBatteryContainer" onclick="openBatteryCalibrateModal()" title="Click to sync or calibrate battery %" class="flex items-center space-x-1 text-emerald-400 font-bold text-xs tracking-tight bg-blue-950/60 px-2 py-1 rounded-lg border border-blue-800/40 cursor-pointer hover:bg-blue-900 transition">
-          <span id="agentBatteryIcon">⚡</span>
-          <span id="agentBatteryText">50%</span>
+
+        <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-2">
+          <span class="text-[10px] text-slate-400 font-bold uppercase block tracking-wider">Duration</span>
+          <strong id="agentDurationText" class="text-base sm:text-lg font-black text-emerald-400 font-mono">00:00:00</strong>
+        </div>
+
+        <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-2">
+          <span class="text-[10px] text-slate-400 font-bold uppercase block tracking-wider">Speed</span>
+          <strong id="agentSpeedText" class="text-base sm:text-lg font-black text-blue-400 font-mono">0.0 km/h</strong>
         </div>
       </div>
 
-      <!-- Date / Calendar Filter Strip -->
-      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2 flex items-center justify-between text-xs">
-        <div class="flex items-center space-x-1.5">
-          <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-700"></i>
-          <span class="font-bold text-slate-700">Route Date:</span>
-        </div>
-        
-        <div class="flex items-center space-x-1.5">
-          <select id="routeDateSelect" onchange="handleDateChange(this.value)" class="bg-white border border-slate-300 text-slate-800 text-xs font-semibold rounded-lg px-2 py-1 focus:outline-none focus:border-blue-600">
-            <option value="2026-08-30">Today (30 Aug 2026)</option>
-            <option value="2026-08-29">Yesterday (29 Aug 2026)</option>
-            <option value="2026-08-28">28 Aug 2026</option>
-          </select>
-          <input type="date" id="customDatePicker" value="2026-08-30" onchange="handleCustomDate(this.value)" class="bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-1.5 py-1">
-        </div>
-      </div>
-
-      <!-- Map Card with Preview & Expand Map Button -->
-      <div class="relative w-full h-[250px] bg-slate-100 border-b border-slate-200">
-        <div id="agentMiniMap" class="w-full h-full"></div>
-        
-        <!-- Floating "Expand Map" Button (Matching Image 1) -->
-        <button onclick="openExpandedMapModal()" class="absolute bottom-3 right-3 z-[400] bg-white hover:bg-slate-50 text-[#1e3a8a] font-bold text-xs px-3.5 py-1.5 rounded-full shadow-lg border border-slate-200 flex items-center space-x-1.5 transition active:scale-95">
-          <span>Expand Map</span>
+      <!-- Action Buttons (Start, Stop, Check In, +3KM Test) -->
+      <div class="grid grid-cols-3 gap-2">
+        <!-- Start / Resume Button -->
+        <button onclick="startAgentTracking()" id="btnAgentStart" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-500/25 active:scale-95 transition">
+          <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+          <span>START DUTY</span>
         </button>
 
-        <!-- Tile Switcher Mini Overlay (Google Streets & Google Hybrid) -->
-        <div class="absolute top-2 right-2 z-[400] bg-white/90 backdrop-blur rounded-lg p-1 shadow border border-slate-200 text-[10px] font-bold flex space-x-1">
-          <button onclick="setMiniMapTile('googleStreets')" id="miniTileStreets" class="px-1.5 py-0.5 rounded bg-blue-600 text-white">Streets</button>
-          <button onclick="setMiniMapTile('googleHybrid')" id="miniTileHybrid" class="px-1.5 py-0.5 rounded text-slate-600 hover:text-slate-900">Hybrid</button>
-        </div>
+        <!-- Stop / Pause Button -->
+        <button onclick="stopAgentTracking()" id="btnAgentStop" class="bg-slate-800 text-slate-500 font-bold py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 border border-slate-700 active:scale-95 transition opacity-60">
+          <i data-lucide="square" class="w-4 h-4 fill-current"></i>
+          <span>STOP</span>
+        </button>
+
+        <!-- Live Check In Button -->
+        <button onclick="performAgentCheckIn()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-blue-600/25 active:scale-95 transition">
+          <i data-lucide="map-pin" class="w-4 h-4"></i>
+          <span>CHECK IN</span>
+        </button>
       </div>
 
-      <!-- Action Buttons (Start, Stop, Check In, +3KM) -->
-      <div class="p-3 bg-slate-50 border-b border-slate-200">
-        <div class="grid grid-cols-4 gap-1.5">
-          <!-- Start Button -->
-          <button onclick="startAgentTracking()" id="btnAgentStart" class="bg-[#e2e8f0] hover:bg-slate-300 text-slate-800 font-bold py-2.5 rounded-lg text-xs transition shadow-sm text-center">
-            Start
-          </button>
-          <!-- Stop Button -->
-          <button onclick="stopAgentTracking()" id="btnAgentStop" class="bg-[#ef4444] hover:bg-red-600 text-white font-bold py-2.5 rounded-lg text-xs transition shadow-sm text-center">
-            Stop
-          </button>
-          <!-- Check In Button -->
-          <button onclick="performAgentCheckIn()" class="bg-white hover:bg-slate-50 text-slate-800 font-bold py-2.5 rounded-lg text-xs border border-slate-300 flex items-center justify-center space-x-1 transition shadow-sm">
-            <span class="text-rose-500">📍</span>
-            <span>Check In</span>
-          </button>
-          <!-- Auto 3 KM Test Button -->
-          <button onclick="simulateTravelProgress(3.0)" title="Simulate traveling 3.0 KM" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-2.5 rounded-lg text-xs border border-indigo-200 flex items-center justify-center space-x-1 transition shadow-sm">
-            <span>🚗</span>
-            <span>+3 KM</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Telemetry Stats Strip (Dark Blue Bar) -->
-      <div class="bg-[#172554] text-white px-4 py-2.5 flex items-center justify-between text-xs font-semibold">
-        <div>
-          <span class="text-blue-200 font-normal">Distance </span>
-          <strong id="agentDistanceText" class="font-bold text-white font-mono">8.4 km</strong>
-        </div>
-        <div>
-          <span class="text-blue-200 font-normal">Duration </span>
-          <strong id="agentDurationText" class="font-bold text-white font-mono">00:00:00</strong>
-        </div>
-        <div>
-          <strong id="agentSpeedText" class="font-bold text-white font-mono">5.6 km/h</strong>
-        </div>
-      </div>
-
-      <!-- Today's Visited Locations Card (Last 3 visible + Scrollbar for >3) -->
-      <div class="p-3 bg-white space-y-2 relative pb-5">
-        <div class="bg-[#dbeafe] text-[#1e40af] px-3 py-1.5 rounded-lg font-bold text-xs tracking-tight flex items-center justify-between">
-          <span>Today's Visited Locations</span>
-          <span class="text-[10px] text-blue-600 font-normal" id="visitedCountBadge">5 Total (Scroll to view)</span>
+      <!-- Visited Locations & Milestones Collapse Header -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-xs px-1">
+          <span class="font-bold text-slate-300 flex items-center space-x-1">
+            <span>📍 Logged Milestones & Checkpoints</span>
+          </span>
+          <span id="milestoneCountText" class="text-[11px] font-mono text-emerald-400 font-bold">0 Logged</span>
         </div>
 
-        <!-- Scrollable container (Max 3 visible at once, vertical scrollbar when >3) -->
-        <div id="visitedLocationsScrollBox" class="max-h-[105px] overflow-y-auto custom-scrollbar space-y-2 px-2 py-1 text-xs text-slate-800 font-medium pr-1">
-          <!-- Populated dynamically -->
-        </div>
-
-        <!-- Floating Navigation Compass Icon (N) on bottom-left (Matching Image 1) -->
-        <div class="absolute -bottom-2 left-4 w-9 h-9 rounded-full bg-[#1e293b] text-white font-black text-xs flex items-center justify-center shadow-lg border-2 border-white">
-          N
+        <!-- Scrollable Milestone List -->
+        <div id="visitedLocationsScrollBox" class="max-h-[90px] overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
+          <div class="text-center py-2 text-xs text-slate-500 font-medium">
+            No milestones logged yet. Tap <strong class="text-emerald-400">START DUTY</strong> or <strong class="text-blue-400">CHECK IN</strong>.
+          </div>
         </div>
       </div>
 
@@ -416,210 +323,35 @@
 
   </main>
 
-  <!-- =========================================================================
-       4. ENTERPRISE ADMIN / COMMAND CENTER PANEL (FLEET TELEMATICS)
-       ========================================================================= -->
-  <main id="adminViewContainer" class="hidden flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto space-y-4">
-    
-    <!-- Top KPI Metrics Banner -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
-        <div>
-          <p class="text-xs text-slate-400 font-medium">Active Units in Field</p>
-          <h3 class="text-2xl font-black text-white mt-0.5" id="adminKpiActiveUnits">12 Online</h3>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">
-          🟢
-        </div>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
-        <div>
-          <p class="text-xs text-slate-400 font-medium">Fleet Road Distance</p>
-          <h3 class="text-2xl font-black text-white mt-0.5 font-mono" id="adminKpiDistance">68.4 km</h3>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg">
-          🚗
-        </div>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
-        <div>
-          <p class="text-xs text-slate-400 font-medium">Avg Battery Health</p>
-          <h3 class="text-2xl font-black text-emerald-400 mt-0.5 font-mono" id="adminKpiBattery">⚡ 74%</h3>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center font-bold text-lg">
-          🔋
-        </div>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
-        <div>
-          <p class="text-xs text-slate-400 font-medium">Total Checkpoints (~3km)</p>
-          <h3 class="text-2xl font-black text-white mt-0.5 font-mono" id="adminKpiCheckpoints">42 Logged</h3>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
-          📍
-        </div>
-      </div>
-    </div>
-
-    <!-- Master Fleet Split Screen Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      
-      <!-- Master Multi-Agent Fleet GIS Map (2 Columns on Large Screens) -->
-      <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[560px]">
-        <!-- Map Header Toolbar -->
-        <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-          <div class="flex items-center space-x-2.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-halo"></span>
-            <h3 class="font-extrabold text-sm text-white">Live Multi-Agent Fleet Map</h3>
-            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">Google GIS</span>
-          </div>
-
-          <div class="flex items-center space-x-2">
-            <!-- Google Streets & Google Hybrid Switcher -->
-            <div class="bg-slate-800 rounded-lg p-1 flex space-x-1 text-xs font-bold border border-slate-700">
-              <button onclick="setAdminFleetTile('googleStreets')" id="adminTileStreets" class="px-2 py-0.5 rounded bg-blue-600 text-white">🚗 Streets</button>
-              <button onclick="setAdminFleetTile('googleHybrid')" id="adminTileHybrid" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">🛰️ Hybrid</button>
-            </div>
-            
-            <button onclick="refreshAdminFleet()" title="Refresh Live Fleet GPS" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs border border-slate-700">
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Master Leaflet Map Container -->
-        <div class="flex-1 w-full relative">
-          <div id="adminFleetMap" class="w-full h-full"></div>
-          
-          <!-- Map Legend Overlay -->
-          <div class="absolute bottom-4 left-4 z-[400] bg-slate-900/90 backdrop-blur border border-slate-700 p-2.5 rounded-xl text-xs space-y-1.5 text-slate-300">
-            <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-emerald-500 border border-white"></span>
-              <span>Online Unit (Live Photo Pin)</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="w-4 h-1 bg-[#10b981] rounded-full"></span>
-              <span>Road Traversal Polyline</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Live Workforce Telematics Roster (1 Column) -->
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[560px]">
-        <!-- Roster Header & Search -->
-        <div class="p-4 border-b border-slate-800 space-y-2.5 bg-slate-900/90">
-          <div class="flex items-center justify-between">
-            <h3 class="font-extrabold text-sm text-white">Workforce Telematics Roster</h3>
-            <span class="text-xs text-blue-400 font-bold" id="rosterCountBadge">4 Agents Online</span>
-          </div>
-
-          <div class="relative">
-            <input type="text" id="rosterSearchInput" oninput="filterAdminRoster(this.value)" placeholder="Search agent name, email or site..." class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 pl-8 focus:outline-none focus:border-blue-600">
-            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
-          </div>
-        </div>
-
-        <!-- Scrollable Agent Cards List -->
-        <div id="adminRosterList" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2.5">
-          <!-- Populated dynamically via JS -->
-        </div>
-
-        <!-- Roster Footer Actions -->
-        <div class="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
-          <button onclick="exportMasterFleetReport()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-blue-600/30 transition">
-            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-            <span>Export Master Daily Fleet Report (CSV/JSON)</span>
-          </button>
-        </div>
-
-      </div>
-
-    </div>
-
-  </main>
-
-  <!-- =========================================================================
-       4. EXPANDED FULL MAP MODAL (MATCHING IMAGE 2)
-       ========================================================================= -->
-  <div id="expandedMapModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 hidden flex flex-col">
-    <!-- Header -->
-    <div class="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <button onclick="closeExpandedMapModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition flex items-center space-x-1.5 text-xs font-bold">
-          <i data-lucide="arrow-left" class="w-4 h-4"></i>
-          <span>Back to Agent Screen</span>
-        </button>
-        <div>
-          <h3 class="font-black text-sm text-white">Full Traversal Map (Guwahati Road Network)</h3>
-          <p class="text-[11px] text-slate-400">Start Point (<span class="text-emerald-400 font-bold">S</span>) ➔ Green Road Polyline ➔ Live Agent Photo Pin</p>
-        </div>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <button onclick="setExpandedTileLayer('googleStreets')" id="expBtnStreets" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white">
-          🚗 Google Streets
-        </button>
-        <button onclick="setExpandedTileLayer('googleHybrid')" id="expBtnHybrid" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 border border-slate-700">
-          🛰️ Google Hybrid
-        </button>
-        <button onclick="closeExpandedMapModal()" class="text-slate-400 hover:text-white p-2">✕</button>
-      </div>
-    </div>
-
-    <!-- Map Container -->
-    <div class="flex-1 w-full bg-slate-950 relative">
-      <div id="expandedFullMap" class="w-full h-full"></div>
-
-      <!-- Legend Overlay (Matching Image 2) -->
-      <div class="absolute bottom-6 left-6 z-[400] bg-white/95 backdrop-blur text-slate-900 p-3.5 rounded-2xl shadow-2xl border border-slate-200 text-xs font-medium space-y-2 max-w-xs">
-        <div class="flex items-center space-x-2.5">
-          <div class="w-6 h-6 rounded-full bg-[#10b981] text-white font-black text-xs flex items-center justify-center shadow">S</div>
-          <span class="font-bold text-slate-800">Starting Point (S)</span>
-        </div>
-        <div class="flex items-center space-x-2.5">
-          <div class="w-6 h-1.5 bg-[#10b981] rounded-full"></div>
-          <span class="text-slate-600">Active Road Polyline (Clear Traversal)</span>
-        </div>
-        <div class="flex items-center space-x-2.5">
-          <div class="relative flex items-center justify-center">
-            <img id="legendAgentPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Agent" class="w-7 h-7 rounded-full object-cover border-2 border-emerald-500 shadow">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white absolute bottom-0 right-0"></span>
-          </div>
-          <span class="font-bold text-slate-800" id="legendAgentName">Current Agent: Dinesh Kumar Singh</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
   <script>
     // =========================================================================
-    // STATE & STORAGE ENGINE (Crash-Proof / Screen-Off Resilient)
+    // STATE ENGINE (Crash-Proof, 100% Real Live Geolocation & Battery)
     // =========================================================================
     const STORAGE_KEY_PROFILE = 'fieldpulse_agent_profile';
-    const STORAGE_KEY_ROUTES = 'fieldpulse_date_routes';
+    const STORAGE_KEY_ACTIVE_ROUTE = 'fieldpulse_live_route';
     const STORAGE_KEY_TIMER = 'fieldpulse_timer_state';
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayDisplay = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
     let state = {
       profile: {
         name: "",
         email: "",
+        vehicleType: "Bike",
+        vehicleNo: "",
         initial: "FA",
         photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
       },
-      currentDate: "2026-08-30",
+      currentDate: todayStr,
       isTrackingActive: false,
       timerInterval: null,
       secondsElapsed: 0,
       lastLat: null,
       lastLng: null,
-      lastMovementTime: Date.now(),
+      geoWatcherId: null,
       currentRoute: {
-        date: "2026-08-30",
+        date: todayStr,
         totalDistanceKm: 0.0,
         duration: "00:00:00",
         avgSpeed: "0.0 km/h",
@@ -627,87 +359,110 @@
       }
     };
 
-    let agentMiniMap = null;
-    let expandedMap = null;
-    let miniLayers = [];
-    let expandedLayers = [];
-    let miniTileLayer = null;
-    let expandedTileLayer = null;
+    let masterMap = null;
+    let masterTileLayer = null;
+    let mapLayers = [];
     let videoStream = null;
 
-    // --- DOMContentLoaded Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('currentDateBadge').innerText = todayDisplay;
       lucide.createIcons();
+      initRealBatteryMonitoring();
       loadStoredProfileAndState();
-
-      // Register Service Worker for PWA Offline / Standalone Installation
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
-          .then(() => console.log("✓ PWA Service Worker Registered"))
-          .catch((err) => console.log("SW registration standby:", err.message));
-      }
-
-      // Check if direct Admin link was opened (e.g. #admin or ?view=admin)
-      if (window.location.hash === '#admin' || window.location.search.includes('view=admin')) {
-        setTimeout(() => switchAppView('admin'), 200);
-      }
     });
 
-    // Screen Wake Lock API (Keeps GPS Active during Field Work)
-    let wakeLockSentinel = null;
-    async function requestScreenWakeLock() {
-      if ('wakeLock' in navigator) {
+    // =========================================================================
+    // REAL BATTERY MONITORING (Live navigator.getBattery)
+    // =========================================================================
+    async function initRealBatteryMonitoring() {
+      const batText = document.getElementById('agentBatteryText');
+      const batIcon = document.getElementById('agentBatteryIcon');
+
+      if ('getBattery' in navigator) {
         try {
-          wakeLockSentinel = await navigator.wakeLock.request('screen');
-          console.log("⚡ Screen WakeLock Active (GPS continuous field tracking)");
-        } catch (err) {
-          console.log("WakeLock standby:", err.message);
+          const battery = await navigator.getBattery();
+          function updateBatteryUI() {
+            const level = Math.round(battery.level * 100);
+            if (batText) batText.innerText = `${level}%`;
+            if (batIcon) batIcon.innerText = battery.charging ? '⚡' : (level > 20 ? '🔋' : '🪫');
+          }
+          updateBatteryUI();
+          battery.addEventListener('levelchange', updateBatteryUI);
+          battery.addEventListener('chargingchange', updateBatteryUI);
+        } catch (e) {
+          console.warn("Battery API:", e.message);
         }
+      } else {
+        if (batText) batText.innerText = `100%`;
+        if (batIcon) batIcon.innerText = `🔋`;
       }
-    }
-
-    // Export Daily Field Telematics Report
-    function exportDailyReport() {
-      const data = {
-        agent: state.profile,
-        date: state.currentDate,
-        totalDistanceKm: state.currentRoute.totalDistanceKm,
-        duration: state.currentRoute.duration,
-        avgSpeed: state.currentRoute.avgSpeed,
-        visitedLocations: state.currentRoute.breadcrumbs || []
-      };
-
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `FieldReport_${state.profile.name.replace(/\s+/g, '_')}_${state.currentDate}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
     }
 
     // =========================================================================
-    // 1. ONE-TIME ONBOARDING & PROFILE SETUP
+    // ONBOARDING & PROFILE SETUP
     // =========================================================================
     function loadStoredProfileAndState() {
       const storedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
       const loginModal = document.getElementById('loginScreenModal');
 
       if (storedProfile) {
-        // User already configured: Skip login screen permanently!
         try {
           state.profile = JSON.parse(storedProfile);
           if (loginModal) loginModal.classList.add('hidden');
           applyProfileToUI();
-          initializeTrackingApp();
+          initAppEngine();
         } catch (e) {
           console.error(e);
           if (loginModal) loginModal.classList.remove('hidden');
         }
       } else {
-        // First-time user: Show login modal
         if (loginModal) loginModal.classList.remove('hidden');
+        initAppEngine();
       }
+    }
+
+    function applyProfileToUI() {
+      document.getElementById('agentHeaderName').innerText = state.profile.name || 'Field Agent';
+      document.getElementById('agentHeaderEmail').innerText = state.profile.vehicleNo ? `${state.profile.vehicleType} (${state.profile.vehicleNo})` : (state.profile.email || 'Active Duty');
+      if (state.profile.photoUrl) {
+        document.getElementById('agentHeaderPhoto').src = state.profile.photoUrl;
+      }
+    }
+
+    function handleOnboardingSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('setupName').value.trim();
+      const email = document.getElementById('setupEmail').value.trim();
+      const vehicleType = document.getElementById('setupVehicleType').value;
+      const vehicleNo = (document.getElementById('setupVehicleNo').value || '').trim();
+      const photoUrl = document.getElementById('setupPhotoPreview').src;
+
+      if (!name) {
+        alert("Please enter your name.");
+        return;
+      }
+
+      state.profile = {
+        name: name,
+        email: email,
+        vehicleType: vehicleType,
+        vehicleNo: vehicleNo,
+        initial: name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'FA',
+        photoUrl: photoUrl
+      };
+
+      localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(state.profile));
+      document.getElementById('loginScreenModal').classList.add('hidden');
+      applyProfileToUI();
+      centerMapOnUserLocation();
+    }
+
+    function openProfileEditModal() {
+      document.getElementById('setupName').value = state.profile.name || '';
+      document.getElementById('setupEmail').value = state.profile.email || '';
+      document.getElementById('setupVehicleNo').value = state.profile.vehicleNo || '';
+      if (state.profile.vehicleType) document.getElementById('setupVehicleType').value = state.profile.vehicleType;
+      document.getElementById('loginScreenModal').classList.remove('hidden');
     }
 
     function requestInitialLocationPermission() {
@@ -721,74 +476,467 @@
             }
             state.lastLat = pos.coords.latitude;
             state.lastLng = pos.coords.longitude;
+            if (masterMap) masterMap.setView([state.lastLat, state.lastLng], 16);
           },
           (err) => {
-            alert("Please allow Location access in your browser/phone settings so road distance can be recorded.");
+            alert("Please allow Location permission in your browser/device settings.");
           },
           { enableHighAccuracy: true, timeout: 8000 }
         );
       }
     }
 
-    function applyProfileToUI() {
-      document.getElementById('agentHeaderName').innerText = `Welcome, ${state.profile.name || 'Field Agent'}`;
-      document.getElementById('agentHeaderEmail').innerText = state.profile.email || '';
-      document.getElementById('agentHeaderPhoto').src = state.profile.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-      const legendPhoto = document.getElementById('legendAgentPhoto');
-      if (legendPhoto) legendPhoto.src = state.profile.photoUrl;
-      const legendName = document.getElementById('legendAgentName');
-      if (legendName) legendName.innerText = `Current Agent: ${state.profile.name}`;
+    // =========================================================================
+    // MAP & REAL GEOLOCATION INITIALIZATION
+    // =========================================================================
+    function initAppEngine() {
+      initMasterMap();
+      restoreSavedLiveSession();
+      locateUserInitialPosition();
     }
 
-    function handleOnboardingSubmit(e) {
-      e.preventDefault();
-      const name = document.getElementById('setupName').value.trim();
-      const email = document.getElementById('setupEmail').value.trim();
-      const vehicleType = document.getElementById('setupVehicleType').value;
-      const vehicleNo = (document.getElementById('setupVehicleNo').value || '').trim();
-      const photoUrl = document.getElementById('setupPhotoPreview').src;
+    function initMasterMap() {
+      if (masterMap) return;
+      masterMap = L.map('masterAppMap', { zoomControl: false }).setView([26.1875, 91.7380], 15);
 
-      if (!name || !email) {
-        alert("Please enter your name and email/employee ID.");
+      masterTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
+      }).addTo(masterMap);
+
+      L.control.zoom({ position: 'topleft' }).addTo(masterMap);
+    }
+
+    function setMapTile(type) {
+      if (!masterMap) return;
+      if (masterTileLayer) masterMap.removeLayer(masterTileLayer);
+      if (type === 'googleHybrid') {
+        masterTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+          maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
+        }).addTo(masterMap);
+        document.getElementById('btnTileHybrid').className = 'px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold transition';
+        document.getElementById('btnTileStreets').className = 'px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-bold transition';
+      } else {
+        masterTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+          maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
+        }).addTo(masterMap);
+        document.getElementById('btnTileStreets').className = 'px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold transition';
+        document.getElementById('btnTileHybrid').className = 'px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-bold transition';
+      }
+    }
+
+    function locateUserInitialPosition() {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            state.lastLat = lat;
+            state.lastLng = lng;
+
+            if (masterMap) masterMap.setView([lat, lng], 16);
+
+            // If no breadcrumbs exist yet, put clean initial position marker
+            if (state.currentRoute.breadcrumbs.length === 0) {
+              renderInitialPositionPin(lat, lng);
+            }
+          },
+          (err) => {
+            console.warn("Initial GPS lookup:", err.message);
+          },
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      }
+    }
+
+    function centerMapOnUserLocation() {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            state.lastLat = lat;
+            state.lastLng = lng;
+            if (masterMap) masterMap.setView([lat, lng], 17, { animate: true });
+          },
+          (err) => alert("Could not fetch GPS. Please ensure Location is turned ON on your phone."),
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      }
+    }
+
+    function renderInitialPositionPin(lat, lng) {
+      if (!masterMap) return;
+      mapLayers.forEach(l => masterMap.removeLayer(l));
+      mapLayers.length = 0;
+
+      const photoUrl = state.profile.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+      const icon = L.divIcon({
+        className: 'current-pos-pin',
+        html: `
+          <div class="agent-circle-pin">
+            <div class="radar-pulse-ring"></div>
+            <img src="${photoUrl}" alt="You">
+          </div>
+        `,
+        iconSize: [44, 44], iconAnchor: [22, 22]
+      });
+
+      const marker = L.marker([lat, lng], { icon: icon }).addTo(masterMap);
+      marker.bindPopup(`<strong>Your Current Location</strong><br/>Ready for Duty`);
+      mapLayers.push(marker);
+    }
+
+    // =========================================================================
+    // START, STOP, CHECK-IN & BACKGROUND GPS TRACKING
+    // =========================================================================
+    function startAgentTracking() {
+      if (state.isTrackingActive) return;
+      state.isTrackingActive = true;
+
+      // Update UI Buttons
+      const btnStart = document.getElementById('btnAgentStart');
+      const btnStop = document.getElementById('btnAgentStop');
+      const pulse = document.getElementById('liveStatusPulse');
+      const statusText = document.getElementById('movementStatusText');
+
+      btnStart.className = 'bg-emerald-500 text-slate-950 font-black py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-500/40 ring-2 ring-white';
+      btnStop.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 active:scale-95 transition cursor-pointer';
+      pulse.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping';
+      statusText.innerText = '🟢 Duty Active (Recording)';
+
+      // Save Start Time
+      const startTime = Date.now() - (state.secondsElapsed * 1000);
+      localStorage.setItem(STORAGE_KEY_TIMER, JSON.stringify({ isTrackingActive: true, startTime }));
+
+      // Start Real Timer
+      if (state.timerInterval) clearInterval(state.timerInterval);
+      state.timerInterval = setInterval(() => {
+        state.secondsElapsed++;
+        const hrs = String(Math.floor(state.secondsElapsed / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((state.secondsElapsed % 3600) / 60)).padStart(2, '0');
+        const secs = String(state.secondsElapsed % 60).padStart(2, '0');
+        const durStr = `${hrs}:${mins}:${secs}`;
+        document.getElementById('agentDurationText').innerText = durStr;
+        state.currentRoute.duration = durStr;
+      }, 1000);
+
+      // Request Screen WakeLock so phone never sleeps tracking
+      if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').catch(e => console.log(e));
+      }
+
+      // Initiate Continuous High Accuracy GPS Watcher
+      initLiveGpsWatcher();
+    }
+
+    function stopAgentTracking() {
+      state.isTrackingActive = false;
+
+      const btnStart = document.getElementById('btnAgentStart');
+      const btnStop = document.getElementById('btnAgentStop');
+      const pulse = document.getElementById('liveStatusPulse');
+      const statusText = document.getElementById('movementStatusText');
+
+      btnStart.className = 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-500/25 active:scale-95 transition';
+      btnStop.className = 'bg-slate-800 text-slate-500 font-bold py-3 rounded-2xl text-xs flex items-center justify-center space-x-1.5 border border-slate-700 active:scale-95 transition opacity-60';
+      pulse.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+      statusText.innerText = '⏸️ Duty Paused';
+
+      if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+      }
+      localStorage.setItem(STORAGE_KEY_TIMER, JSON.stringify({ isTrackingActive: false, startTime: 0 }));
+
+      if (state.geoWatcherId !== null && 'geolocation' in navigator) {
+        navigator.geolocation.clearWatch(state.geoWatcherId);
+        state.geoWatcherId = null;
+      }
+    }
+
+    function initLiveGpsWatcher() {
+      if (!('geolocation' in navigator)) return;
+
+      if (state.geoWatcherId !== null) {
+        navigator.geolocation.clearWatch(state.geoWatcherId);
+      }
+
+      state.geoWatcherId = navigator.geolocation.watchPosition(
+        (pos) => handleNewGpsCoordinate(pos.coords.latitude, pos.coords.longitude, pos.coords.speed),
+        (err) => console.warn("GPS Watcher:", err.message),
+        { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+      );
+    }
+
+    function handleNewGpsCoordinate(lat, lng, speedMps) {
+      if (!state.isTrackingActive) return;
+
+      const speedKmh = speedMps ? +(speedMps * 3.6).toFixed(1) : 0.0;
+      document.getElementById('agentSpeedText').innerText = `${speedKmh} km/h`;
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // First coordinate of the shift
+      if (state.lastLat === null || state.lastLng === null) {
+        state.lastLat = lat;
+        state.lastLng = lng;
+        state.currentRoute.breadcrumbs = [
+          { lat: lat, lng: lng, label: `Start Point (${timeStr})`, time: timeStr, speedKmh: speedKmh }
+        ];
+        state.currentRoute.totalDistanceKm = 0.0;
+        saveLiveSession();
+        renderMapRoute();
         return;
       }
 
-      const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'FA';
+      // Calculate distance from previous point
+      const distMeters = calculateHaversineMeters(state.lastLat, state.lastLng, lat, lng);
 
-      state.profile = {
-        name: name,
-        email: email,
-        vehicleType: vehicleType,
-        vehicleNo: vehicleNo,
-        initial: initials,
-        photoUrl: photoUrl
-      };
+      // Ignore stationary jitter (< 8 meters)
+      if (distMeters < 8) return;
 
-      // Save permanently in localStorage so it never prompts again
-      localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(state.profile));
+      state.currentRoute.totalDistanceKm = +(state.currentRoute.totalDistanceKm + (distMeters / 1000)).toFixed(2);
+      document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm.toFixed(2)} km`;
 
-      // Close modal
-      document.getElementById('loginScreenModal').classList.add('hidden');
-      applyProfileToUI();
-      initializeTrackingApp();
-      requestScreenWakeLock();
+      state.lastLat = lat;
+      state.lastLng = lng;
 
-      // Sync with server
-      fetch('/api/agent/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(state.profile)
-      }).catch(err => console.error(err));
+      // Auto-milestone checkpoint every ~3.0 KM
+      const distSinceLastMilestone = state.currentRoute.totalDistanceKm - (state.lastMilestoneKm || 0);
+      if (distSinceLastMilestone >= 3.0) {
+        state.lastMilestoneKm = state.currentRoute.totalDistanceKm;
+        getRealLocationName(lat, lng).then(addr => {
+          state.currentRoute.breadcrumbs.push({
+            lat: lat, lng: lng,
+            label: `${addr} (${state.currentRoute.totalDistanceKm.toFixed(1)} km)`,
+            time: timeStr, speedKmh: speedKmh
+          });
+          saveLiveSession();
+          renderMapRoute();
+          renderMilestoneList();
+        });
+      } else {
+        // Continuous road breadcrumb
+        state.currentRoute.breadcrumbs.push({
+          lat: lat, lng: lng,
+          label: `Road Transit (${state.currentRoute.totalDistanceKm.toFixed(2)} km)`,
+          time: timeStr, speedKmh: speedKmh
+        });
+        saveLiveSession();
+        renderMapRoute();
+      }
     }
 
-    function openProfileEditModal() {
-      document.getElementById('setupName').value = state.profile.name || '';
-      document.getElementById('setupEmail').value = state.profile.email || '';
-      document.getElementById('setupPhotoPreview').src = state.profile.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-      document.getElementById('loginScreenModal').classList.remove('hidden');
+    async function performAgentCheckIn() {
+      if (!('geolocation' in navigator)) {
+        alert("Geolocation is not supported on this browser.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          state.lastLat = lat;
+          state.lastLng = lng;
+
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const realAddr = await getRealLocationName(lat, lng);
+
+          const checkInPoint = {
+            lat: lat,
+            lng: lng,
+            label: `Check-In: ${realAddr} (${state.currentRoute.totalDistanceKm.toFixed(2)} km)`,
+            time: timeStr,
+            speedKmh: 0.0
+          };
+
+          if (!state.currentRoute.breadcrumbs) state.currentRoute.breadcrumbs = [];
+          state.currentRoute.breadcrumbs.push(checkInPoint);
+
+          saveLiveSession();
+          renderMapRoute();
+          renderMilestoneList();
+          if (masterMap) masterMap.setView([lat, lng], 17, { animate: true });
+
+          alert(`✓ Check-In Logged successfully at:\n"${realAddr}" (${timeStr})`);
+        },
+        (err) => alert("Could not fetch GPS for Check-In. Please ensure GPS is enabled."),
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
     }
 
-    // --- CAMERA CAPTURE LOGIC ---
+    // =========================================================================
+    // ROAD CURVE GEOMETRY SNAPPING (OpenStreetMap OSRM Router)
+    // =========================================================================
+    async function renderMapRoute() {
+      if (!masterMap) return;
+      mapLayers.forEach(l => masterMap.removeLayer(l));
+      mapLayers.length = 0;
+
+      const bcs = state.currentRoute.breadcrumbs || [];
+      if (bcs.length === 0) return;
+
+      const roadCoords = await fetchRoadGeometry(bcs);
+
+      // Glowing Emerald Green Road Polyline
+      const polyline = L.polyline(roadCoords, {
+        color: '#10b981', weight: 5, opacity: 0.9, lineCap: 'round', lineJoin: 'round'
+      }).addTo(masterMap);
+      mapLayers.push(polyline);
+
+      // Start Point 'S' Marker
+      const startPt = bcs[0];
+      const startIcon = L.divIcon({
+        className: 'start-pin-wrapper',
+        html: `<div class="start-circle-pin">S</div>`,
+        iconSize: [28, 28], iconAnchor: [14, 14]
+      });
+      const startMarker = L.marker([startPt.lat, startPt.lng], { icon: startIcon }).addTo(masterMap);
+      startMarker.bindPopup(`<strong>Start Point (S)</strong><br/>${startPt.label}`);
+      mapLayers.push(startMarker);
+
+      // Current Location Pin with Circular Photo
+      const curPt = bcs[bcs.length - 1];
+      const photoUrl = state.profile.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+      const curIcon = L.divIcon({
+        className: 'agent-pin-wrapper',
+        html: `
+          <div class="agent-circle-pin">
+            <div class="radar-pulse-ring"></div>
+            <img src="${photoUrl}" alt="You">
+          </div>
+        `,
+        iconSize: [44, 44], iconAnchor: [22, 22]
+      });
+      const curMarker = L.marker([curPt.lat, curPt.lng], { icon: curIcon, zIndexOffset: 1000 }).addTo(masterMap);
+      curMarker.bindPopup(`<strong>${state.profile.name || 'You'}</strong><br/>${curPt.label}`);
+      mapLayers.push(curMarker);
+
+      if (polyline.getBounds().isValid()) {
+        masterMap.fitBounds(polyline.getBounds(), { padding: [40, 40], maxZoom: 17 });
+      }
+    }
+
+    async function fetchRoadGeometry(waypoints) {
+      if (waypoints.length < 2) return waypoints.map(w => [w.lat, w.lng]);
+
+      const validPoints = [waypoints[0]];
+      for (let i = 1; i < waypoints.length; i++) {
+        const d = calculateHaversineMeters(waypoints[i-1].lat, waypoints[i-1].lng, waypoints[i].lat, waypoints[i].lng);
+        if (d < 35000) validPoints.push(waypoints[i]);
+      }
+      if (validPoints.length < 2) return waypoints.map(w => [w.lat, w.lng]);
+
+      try {
+        const coordsStr = validPoints.map(p => `${p.lng},${p.lat}`).join(';');
+        const url = `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        const data = await res.json();
+
+        if (data.code === 'Ok' && data.routes && data.routes[0]) {
+          return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        }
+      } catch (e) {
+        console.log("OSRM fallback smoothing");
+      }
+
+      return validPoints.map(p => [p.lat, p.lng]);
+    }
+
+    async function getRealLocationName(lat, lng) {
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        const data = await res.json();
+        if (data && data.address) {
+          const a = data.address;
+          const road = a.road || a.pedestrian || a.suburb || a.neighbourhood || a.commercial || '';
+          const city = a.city || a.town || a.village || a.state || '';
+          if (road && city) return `${road}, ${city}`;
+          if (road) return road;
+          if (city) return city;
+        }
+        if (data && data.display_name) {
+          return data.display_name.split(',').slice(0, 2).join(', ');
+        }
+      } catch (e) {}
+      return `GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    }
+
+    function renderMilestoneList() {
+      const box = document.getElementById('visitedLocationsScrollBox');
+      const bcs = state.currentRoute.breadcrumbs || [];
+      const milestones = bcs.filter(b => b.label.includes('Check-In') || b.label.includes('Start') || b.label.includes('km'));
+
+      document.getElementById('milestoneCountText').innerText = `${milestones.length} Logged`;
+
+      if (milestones.length === 0) {
+        box.innerHTML = `<div class="text-center py-2 text-xs text-slate-500 font-medium">No milestones logged yet.</div>`;
+        return;
+      }
+
+      box.innerHTML = milestones.map((m, idx) => `
+        <div class="flex items-center space-x-2 bg-slate-950 p-2 rounded-xl border border-slate-800 text-xs">
+          <span class="w-5 h-5 rounded-full ${idx === 0 ? 'bg-emerald-500 text-white font-bold' : 'bg-blue-600 text-white font-bold'} text-[10px] flex items-center justify-center shrink-0">
+            ${idx === 0 ? 'S' : idx}
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="text-white font-bold truncate">${m.label}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${m.time}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function saveLiveSession() {
+      localStorage.setItem(STORAGE_KEY_ACTIVE_ROUTE, JSON.stringify(state.currentRoute));
+    }
+
+    function restoreSavedLiveSession() {
+      const saved = localStorage.getItem(STORAGE_KEY_ACTIVE_ROUTE);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.date === todayStr) {
+            state.currentRoute = parsed;
+            document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm.toFixed(2)} km`;
+            document.getElementById('agentDurationText').innerText = state.currentRoute.duration || '00:00:00';
+            renderMilestoneList();
+            renderMapRoute();
+          }
+        } catch(e) {}
+      }
+
+      const timerSaved = localStorage.getItem(STORAGE_KEY_TIMER);
+      if (timerSaved) {
+        try {
+          const t = JSON.parse(timerSaved);
+          if (t && t.isTrackingActive && t.startTime) {
+            state.secondsElapsed = Math.floor((Date.now() - t.startTime) / 1000);
+            startAgentTracking();
+          }
+        } catch(e) {}
+      }
+    }
+
+    function calculateHaversineMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const φ1 = lat1 * Math.PI / 180;
+      const φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    // Camera Capture
     async function openLiveCameraModal() {
       const modal = document.getElementById('cameraModal');
       const video = document.getElementById('cameraVideo');
@@ -798,7 +946,6 @@
         videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
         video.srcObject = videoStream;
       } catch (err) {
-        console.warn("Webcam access error, using fallback photo picker", err);
         document.getElementById('fileUploadInput').click();
         closeCameraModal();
       }
@@ -816,6 +963,11 @@
 
       const photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
       document.getElementById('setupPhotoPreview').src = photoDataUrl;
+      const permCam = document.getElementById('permBtnCam');
+      if (permCam) {
+        permCam.innerText = '✓ Allowed';
+        permCam.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px]';
+      }
       closeCameraModal();
     }
 
@@ -836,908 +988,6 @@
         };
         reader.readAsDataURL(file);
       }
-    }
-
-    // =========================================================================
-    // 2. INITIALIZE TRACKING ENGINE, BATTERY & GOOGLE STREETS/HYBRID MAPS
-    // =========================================================================
-    async function initializeTrackingApp() {
-      // Clear out any old Panbazar mock routes from localStorage
-      const stored = localStorage.getItem(STORAGE_KEY_ROUTES);
-      if (stored && stored.includes("Panbazar")) {
-        localStorage.removeItem(STORAGE_KEY_ROUTES);
-      }
-
-      initAgentMiniMap();
-      restoreTimerState();
-      initRealBatteryMonitoring();
-
-      // Immediately fetch real device GPS & reverse geocode starting point
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            state.lastLat = lat;
-            state.lastLng = lng;
-            state.lastMilestoneKm = 0.0;
-
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const realAddr = await getRealLocationName(lat, lng);
-
-            state.currentRoute.breadcrumbs = [
-              { lat: lat, lng: lng, label: `Starting Point: ${realAddr} (0.0 km)`, time: timeStr, speedKmh: 0, isStationary: false }
-            ];
-            state.currentRoute.totalDistanceKm = 0.0;
-
-            if (agentMiniMap) agentMiniMap.setView([lat, lng], 16);
-            if (expandedMap) expandedMap.setView([lat, lng], 16);
-
-            updateRouteDisplay();
-            initBackgroundGeolocationWatch();
-          },
-          (err) => {
-            console.warn("GPS lookup:", err.message);
-            loadRouteForDate(state.currentDate);
-            initBackgroundGeolocationWatch();
-          },
-          { enableHighAccuracy: true, timeout: 8000 }
-        );
-      } else {
-        loadRouteForDate(state.currentDate);
-        initBackgroundGeolocationWatch();
-      }
-    }
-
-    // --- REAL REVERSE GEOCODING ENGINE ---
-    async function getRealLocationName(lat, lng) {
-      try {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-        const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-        const data = await res.json();
-        if (data && data.address) {
-          const a = data.address;
-          const road = a.road || a.pedestrian || a.suburb || a.neighbourhood || a.commercial || a.city_district || a.county || '';
-          const city = a.city || a.town || a.village || a.state_district || a.state || '';
-          if (road && city) return `${road}, ${city}`;
-          if (road) return road;
-          if (city) return city;
-        }
-        if (data && data.display_name) {
-          return data.display_name.split(',').slice(0, 2).join(', ');
-        }
-      } catch (e) {
-        console.log("Reverse geocode standby:", e.message);
-      }
-      return `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-    }
-
-    function initAgentMiniMap() {
-      if (agentMiniMap) return;
-      // Default to Google Streets View
-      agentMiniMap = L.map('agentMiniMap', { zoomControl: true }).setView([26.1875, 91.7420], 16);
-      
-      miniTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-        attribution: '&copy; Google Maps'
-      }).addTo(agentMiniMap);
-
-      renderRouteOnMap(agentMiniMap, miniLayers);
-    }
-
-    function setMiniMapTile(type) {
-      if (!agentMiniMap) return;
-      if (miniTileLayer) agentMiniMap.removeLayer(miniTileLayer);
-      if (type === 'googleHybrid') {
-        miniTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
-        }).addTo(agentMiniMap);
-        document.getElementById('miniTileHybrid').className = 'px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold';
-        document.getElementById('miniTileStreets').className = 'px-1.5 py-0.5 rounded text-slate-600 hover:text-slate-900 font-bold';
-      } else {
-        miniTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
-        }).addTo(agentMiniMap);
-        document.getElementById('miniTileStreets').className = 'px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold';
-        document.getElementById('miniTileHybrid').className = 'px-1.5 py-0.5 rounded text-slate-600 hover:text-slate-900 font-bold';
-      }
-    }
-
-    // =========================================================================
-    // 3. MAP RENDERING: START 'S', REAL ROAD POLYLINE & ROUND PHOTO PIN
-    // =========================================================================
-    async function renderRouteOnMap(targetMap, layersArray) {
-      if (!targetMap) return;
-      layersArray.forEach(l => targetMap.removeLayer(l));
-      layersArray.length = 0;
-
-      const bcs = state.currentRoute.breadcrumbs || [];
-      if (bcs.length === 0) return;
-
-      // 1. Get Real Road Geometry (Turn-by-turn curves along streets)
-      const roadPath = await fetchRoadGeometry(bcs);
-
-      // Draw Glowing Emerald Green Road Polyline
-      const polyline = L.polyline(roadPath, {
-        color: '#10b981',
-        weight: 5.5,
-        opacity: 0.95,
-        lineCap: 'round',
-        lineJoin: 'round'
-      }).addTo(targetMap);
-      layersArray.push(polyline);
-
-      // 2. Starting Point 'S' Marker (Perfect Round Circle)
-      const startPt = bcs[0];
-      const startIcon = L.divIcon({
-        className: 'start-pin-wrapper',
-        html: `<div class="start-circle-pin">S</div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14]
-      });
-      const startMarker = L.marker([startPt.lat, startPt.lng], { icon: startIcon }).addTo(targetMap);
-      startMarker.bindPopup(`<strong>Start Point (S)</strong><br/>${startPt.label}<br/>Time: ${startPt.time}`);
-      layersArray.push(startMarker);
-
-      // 3. Current Location Pin: PERFECT ROUND CIRCLE AVATAR with Pulsing Radar Halo
-      const curPt = bcs[bcs.length - 1];
-      const photoUrl = state.profile.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-      
-      const currentIcon = L.divIcon({
-        className: 'agent-pin-wrapper',
-        html: `
-          <div class="agent-circle-pin">
-            <div class="radar-pulse-ring"></div>
-            <img src="${photoUrl}" alt="Agent Photo">
-          </div>
-        `,
-        iconSize: [44, 44],
-        iconAnchor: [22, 22]
-      });
-      const curMarker = L.marker([curPt.lat, curPt.lng], { icon: currentIcon, zIndexOffset: 1000 }).addTo(targetMap);
-      curMarker.bindPopup(`<strong>${state.profile.name} (Current Location)</strong><br/>${curPt.label}<br/>Speed: ${curPt.speedKmh} km/h`);
-      layersArray.push(curMarker);
-
-      // Fit map camera cleanly onto the road route at street zoom level
-      if (polyline.getBounds().isValid()) {
-        targetMap.fitBounds(polyline.getBounds(), { padding: [35, 35], maxZoom: 16 });
-      }
-    }
-
-    // --- REAL ROAD GEOMETRY ENGINE (OSRM Router with Local Fallback) ---
-    async function fetchRoadGeometry(waypoints) {
-      if (waypoints.length < 2) return waypoints.map(w => [w.lat, w.lng]);
-
-      // If user waypoints are too far apart (> 30 km), keep only local valid path
-      const validPoints = [waypoints[0]];
-      for (let i = 1; i < waypoints.length; i++) {
-        const d = calculateHaversineMeters(waypoints[i-1].lat, waypoints[i-1].lng, waypoints[i].lat, waypoints[i].lng);
-        if (d < 35000) validPoints.push(waypoints[i]); // ignore outlier cross-country jumps
-      }
-
-      if (validPoints.length < 2) return waypoints.map(w => [w.lat, w.lng]);
-
-      try {
-        // Query OpenStreetMap OSRM driving router for turn-by-turn road coordinates
-        const coordsStr = validPoints.map(p => `${p.lng},${p.lat}`).join(';');
-        const url = `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2500);
-
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        const data = await res.json();
-
-        if (data.code === 'Ok' && data.routes && data.routes[0]) {
-          // Return exact road geometry coordinates [[lat, lng], [lat, lng], ...]
-          return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        }
-      } catch (e) {
-        console.log("OSRM router fallback, using road curve smoothing:", e.message);
-      }
-
-      // Fallback: Local road curve smoothing
-      const smoothed = [];
-      for (let i = 0; i < validPoints.length - 1; i++) {
-        const p1 = validPoints[i];
-        const p2 = validPoints[i+1];
-        smoothed.push([p1.lat, p1.lng]);
-        
-        // Add road curve interpolation points
-        const midLat = (p1.lat + p2.lat) / 2 + (Math.sin(i) * 0.0003);
-        const midLng = (p1.lng + p2.lng) / 2 + (Math.cos(i) * 0.0003);
-        smoothed.push([midLat, midLng]);
-      }
-      smoothed.push([validPoints[validPoints.length - 1].lat, validPoints[validPoints.length - 1].lng]);
-      return smoothed;
-    }
-
-    // =========================================================================
-    // 4. DATE PICKER & HISTORICAL ROUTE SELECTION
-    // =========================================================================
-    async function handleDateChange(date) {
-      state.currentDate = date;
-      document.getElementById('customDatePicker').value = date;
-      await loadRouteForDate(date);
-    }
-
-    async function handleCustomDate(date) {
-      if (!date) return;
-      state.currentDate = date;
-      document.getElementById('routeDateSelect').value = date;
-      await loadRouteForDate(date);
-    }
-
-    async function loadRouteForDate(date) {
-      // 1. Check local storage first (crash-proof)
-      const storedRoutes = JSON.parse(localStorage.getItem(STORAGE_KEY_ROUTES) || '{}');
-      if (storedRoutes[date]) {
-        state.currentRoute = storedRoutes[date];
-        updateRouteDisplay();
-        return;
-      }
-
-      // 2. Fetch from server
-      try {
-        const res = await fetch(`/api/agent/routes?date=${date}`);
-        const data = await res.json();
-        if (data.success && data.route) {
-          state.currentRoute = data.route;
-          storedRoutes[date] = data.route;
-          localStorage.setItem(STORAGE_KEY_ROUTES, JSON.stringify(storedRoutes));
-        }
-      } catch (err) {
-        console.error("Error loading historical route", err);
-      }
-
-      updateRouteDisplay();
-    }
-
-    function updateRouteDisplay() {
-      // Update Telemetry Metrics
-      document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm} km`;
-      document.getElementById('agentDurationText').innerText = state.currentRoute.duration || "00:00:00";
-      document.getElementById('agentSpeedText').innerText = state.currentRoute.avgSpeed || "5.6 km/h";
-
-      // Render Visited Locations (With Scrollbar for >3)
-      renderVisitedLocationsBox();
-
-      // Update Maps
-      if (agentMiniMap) renderRouteOnMap(agentMiniMap, miniLayers);
-      if (expandedMap) renderRouteOnMap(expandedMap, expandedLayers);
-    }
-
-    function renderVisitedLocationsBox() {
-      const scrollBox = document.getElementById('visitedLocationsScrollBox');
-      if (!scrollBox) return;
-
-      const bcs = state.currentRoute.breadcrumbs || [];
-      scrollBox.innerHTML = bcs.map(b => `
-        <div class="flex items-center space-x-2.5">
-          <span class="w-4 h-4 rounded bg-[#10b981] text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
-          <span class="text-slate-800">${b.label}</span>
-        </div>
-      `).join('');
-
-      document.getElementById('visitedCountBadge').innerText = `${bcs.length} Total (Scroll to view)`;
-    }
-
-    // =========================================================================
-    // 5. MOVEMENT INTELLIGENCE & CRASH-PROOF BACKGROUND TRACKING
-    // =========================================================================
-    function startAgentTracking() {
-      if (state.isTrackingActive) return;
-      state.isTrackingActive = true;
-      requestScreenWakeLock();
-
-      document.getElementById('btnAgentStart').className = 'bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs shadow-md';
-      document.getElementById('btnAgentStop').className = 'bg-[#ef4444] text-white font-bold py-2.5 rounded-lg text-xs opacity-80';
-
-      const startTime = Date.now() - (state.secondsElapsed * 1000);
-      localStorage.setItem(STORAGE_KEY_TIMER, JSON.stringify({ isTrackingActive: true, startTime }));
-
-      // Check for Night Shift (10 PM ➔ 6 AM)
-      const currentHour = new Date().getHours();
-      const isNightShift = (currentHour >= 20 || currentHour < 7);
-      const shiftLabel = isNightShift ? "🌙 Night Shift (10 PM ➔ 6 AM · Present)" : "☀️ Day Duty (Present)";
-      
-      const movStatus = document.getElementById('movementStatusText');
-      if (movStatus) movStatus.innerText = `🟢 Tracking Active · ${shiftLabel}`;
-
-      state.timerInterval = setInterval(() => {
-        state.secondsElapsed++;
-        const hrs = String(Math.floor(state.secondsElapsed / 3600)).padStart(2, '0');
-        const mins = String(Math.floor((state.secondsElapsed % 3600) / 60)).padStart(2, '0');
-        const secs = String(state.secondsElapsed % 60).padStart(2, '0');
-        const durStr = `${hrs}:${mins}:${secs}`;
-        document.getElementById('agentDurationText').innerText = durStr;
-        state.currentRoute.duration = durStr;
-      }, 1000);
-    }
-
-    function stopAgentTracking() {
-      state.isTrackingActive = false;
-      if (state.timerInterval) {
-        clearInterval(state.timerInterval);
-        state.timerInterval = null;
-      }
-      localStorage.setItem(STORAGE_KEY_TIMER, JSON.stringify({ isTrackingActive: false, startTime: 0 }));
-      document.getElementById('btnAgentStart').className = 'bg-[#e2e8f0] text-slate-800 font-bold py-2.5 rounded-lg text-xs';
-      document.getElementById('btnAgentStop').className = 'bg-slate-700 text-slate-300 font-bold py-2.5 rounded-lg text-xs';
-    }
-
-    function restoreTimerState() {
-      const storedTimer = JSON.parse(localStorage.getItem(STORAGE_KEY_TIMER) || 'null');
-      if (storedTimer && storedTimer.isTrackingActive && storedTimer.startTime) {
-        state.secondsElapsed = Math.floor((Date.now() - storedTimer.startTime) / 1000);
-        startAgentTracking();
-      }
-    }
-
-    // Geolocation Watch with Stationary Filter
-    function initBackgroundGeolocationWatch() {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.watchPosition(
-          (pos) => handleNewGpsCoordinate(pos.coords.latitude, pos.coords.longitude, pos.coords.speed),
-          (err) => console.log("GPS watcher standby:", err.message),
-          { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-        );
-      }
-    }
-
-    function handleNewGpsCoordinate(lat, lng, speedMps) {
-      const speedKmh = speedMps ? +(speedMps * 3.6).toFixed(1) : 4.5;
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      // If this is the first live GPS point, check if user is far from initial default mock route (> 25 km)
-      if (state.lastLat === null && state.currentRoute.breadcrumbs && state.currentRoute.breadcrumbs.length > 0) {
-        const startDist = calculateHaversineMeters(state.currentRoute.breadcrumbs[0].lat, state.currentRoute.breadcrumbs[0].lng, lat, lng);
-        if (startDist > 25000) {
-          // Reset route origin locally to user's real location so NO cross-state straight lines are drawn!
-          state.currentRoute.breadcrumbs = [
-            { lat: lat, lng: lng, label: `Starting Point (${timeStr})`, time: timeStr, speedKmh: speedKmh, isStationary: false }
-          ];
-          state.currentRoute.totalDistanceKm = 0.0;
-        }
-      }
-
-      // Calculate displacement from last point
-      if (state.lastLat !== null && state.lastLng !== null) {
-        const distMeters = calculateHaversineMeters(state.lastLat, state.lastLng, lat, lng);
-        
-        // Stationary check: If less than 10 meters, user is steady at location -> DO NOT draw jitter polyline
-        if (distMeters < 10) {
-          document.getElementById('movementStatusText').innerText = `🟡 Stationary (Idle at Site)`;
-          return;
-        }
-
-        // User is moving along the road!
-        state.currentRoute.totalDistanceKm = +(state.currentRoute.totalDistanceKm + (distMeters / 1000)).toFixed(2);
-        document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm} km`;
-      }
-
-      state.lastLat = lat;
-      state.lastLng = lng;
-      document.getElementById('movementStatusText').innerText = `🟢 Moving (${speedKmh} km/h)`;
-      document.getElementById('agentSpeedText').innerText = `${speedKmh} km/h`;
-
-      // Check for automatic ~3 KM milestone interval
-      const distSinceLastMilestone = state.currentRoute.totalDistanceKm - (state.lastMilestoneKm || 0);
-      if (distSinceLastMilestone >= 3.0) {
-        const milestoneKm = state.currentRoute.totalDistanceKm.toFixed(1);
-        const milestoneNames = ["Transit Sector Junction", "High Street Point", "Commercial Bay Checkpoint", "Industrial Terminal"];
-        const name = milestoneNames[Math.floor(Math.random() * milestoneNames.length)];
-        
-        const milestonePoint = {
-          lat: lat,
-          lng: lng,
-          label: `${name} (${milestoneKm} km)`,
-          time: timeStr,
-          speedKmh: speedKmh,
-          isStationary: false
-        };
-        state.currentRoute.breadcrumbs.push(milestonePoint);
-        state.lastMilestoneKm = state.currentRoute.totalDistanceKm;
-      } else {
-        // Add road coordinate
-        const newPoint = {
-          lat: lat,
-          lng: lng,
-          label: `Active Road Transit (${state.currentRoute.totalDistanceKm} km)`,
-          time: timeStr,
-          speedKmh: speedKmh,
-          isStationary: false
-        };
-        state.currentRoute.breadcrumbs.push(newPoint);
-      }
-
-      // Persist immediately in localStorage so nothing is ever lost on screen-off / refresh / crash
-      const storedRoutes = JSON.parse(localStorage.getItem(STORAGE_KEY_ROUTES) || '{}');
-      storedRoutes[state.currentDate] = state.currentRoute;
-      localStorage.setItem(STORAGE_KEY_ROUTES, JSON.stringify(storedRoutes));
-
-      renderVisitedLocationsBox();
-      if (agentMiniMap) renderRouteOnMap(agentMiniMap, miniLayers);
-      if (expandedMap) renderRouteOnMap(expandedMap, expandedLayers);
-    }
-
-    // --- SIMULATE +3.0 KM TRAVEL MOVEMENT WITH REAL REVERSE GEOCODING ---
-    async function simulateTravelProgress(distanceDelta = 3.0) {
-      const lastPt = (state.currentRoute.breadcrumbs && state.currentRoute.breadcrumbs.length > 0)
-        ? state.currentRoute.breadcrumbs[state.currentRoute.breadcrumbs.length - 1]
-        : { lat: state.lastLat || 26.1885, lng: state.lastLng || 91.7440 };
-
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      state.currentRoute.totalDistanceKm = +(state.currentRoute.totalDistanceKm + distanceDelta).toFixed(1);
-      document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm} km`;
-
-      const newLat = lastPt.lat + (Math.random() - 0.5) * 0.005;
-      const newLng = lastPt.lng + (Math.random() - 0.5) * 0.005;
-      state.lastLat = newLat;
-      state.lastLng = newLng;
-
-      // Reverse geocode real street / locality name
-      const realLocationName = await getRealLocationName(newLat, newLng);
-
-      const newMilestone = {
-        lat: newLat,
-        lng: newLng,
-        label: `${realLocationName} (${state.currentRoute.totalDistanceKm} km)`,
-        time: timeStr,
-        speedKmh: 5.8,
-        isStationary: false
-      };
-
-      if (!state.currentRoute.breadcrumbs) state.currentRoute.breadcrumbs = [];
-      state.currentRoute.breadcrumbs.push(newMilestone);
-      state.lastMilestoneKm = state.currentRoute.totalDistanceKm;
-
-      const storedRoutes = JSON.parse(localStorage.getItem(STORAGE_KEY_ROUTES) || '{}');
-      storedRoutes[state.currentDate] = state.currentRoute;
-      localStorage.setItem(STORAGE_KEY_ROUTES, JSON.stringify(storedRoutes));
-
-      updateRouteDisplay();
-      alert(`📍 +${distanceDelta} KM Traveled: Auto-recorded live location at "${realLocationName} (${state.currentRoute.totalDistanceKm} km)"!`);
-    }
-
-    function calculateHaversineMeters(lat1, lon1, lat2, lon2) {
-      const R = 6371e3;
-      const φ1 = lat1 * Math.PI / 180;
-      const φ2 = lat2 * Math.PI / 180;
-      const Δφ = (lat2 - lat1) * Math.PI / 180;
-      const Δλ = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    // --- CHECK IN ACTION (REAL REVERSE GEOCODED LOCATION) ---
-    async function performAgentCheckIn() {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      state.currentRoute.totalDistanceKm = +(state.currentRoute.totalDistanceKm + 1.0).toFixed(1);
-      document.getElementById('agentDistanceText').innerText = `${state.currentRoute.totalDistanceKm} km`;
-
-      const lastPt = (state.currentRoute.breadcrumbs && state.currentRoute.breadcrumbs.length > 0)
-        ? state.currentRoute.breadcrumbs[state.currentRoute.breadcrumbs.length - 1]
-        : { lat: state.lastLat || 26.1885, lng: state.lastLng || 91.7440 };
-
-      const newLat = lastPt.lat + (Math.random() - 0.5) * 0.002;
-      const newLng = lastPt.lng + (Math.random() - 0.5) * 0.002;
-      state.lastLat = newLat;
-      state.lastLng = newLng;
-
-      // Reverse geocode real street / locality name
-      const realLocationName = await getRealLocationName(newLat, newLng);
-
-      const newPt = {
-        lat: newLat,
-        lng: newLng,
-        label: `Checked In: ${realLocationName} (${state.currentRoute.totalDistanceKm} km)`,
-        time: timeStr,
-        speedKmh: 4.8,
-        isStationary: false
-      };
-
-      if (!state.currentRoute.breadcrumbs) state.currentRoute.breadcrumbs = [];
-      state.currentRoute.breadcrumbs.push(newPt);
-
-      // Save crash-proof to localStorage and server
-      const storedRoutes = JSON.parse(localStorage.getItem(STORAGE_KEY_ROUTES) || '{}');
-      storedRoutes[state.currentDate] = state.currentRoute;
-      localStorage.setItem(STORAGE_KEY_ROUTES, JSON.stringify(storedRoutes));
-
-      updateRouteDisplay();
-      alert(`📍 Check-In recorded at ${realLocationName} (${timeStr})! Location saved and pinned to route.`);
-    }
-
-    // =========================================================================
-    // 6. EXPANDED FULL MAP MODAL (GOOGLE STREETS & HYBRID)
-    // =========================================================================
-    function openExpandedMapModal() {
-      const modal = document.getElementById('expandedMapModal');
-      modal.classList.remove('hidden');
-
-      if (!expandedMap) {
-        expandedMap = L.map('expandedFullMap', { zoomControl: true }).setView([state.lastLat || 26.1875, state.lastLng || 91.7420], 16);
-        expandedTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
-        }).addTo(expandedMap);
-      }
-
-      setTimeout(() => {
-        expandedMap.invalidateSize();
-        renderRouteOnMap(expandedMap, expandedLayers);
-      }, 100);
-      lucide.createIcons();
-    }
-
-    function closeExpandedMapModal() {
-      document.getElementById('expandedMapModal').classList.add('hidden');
-    }
-
-    function setExpandedTileLayer(type) {
-      if (!expandedMap) return;
-      if (expandedTileLayer) expandedMap.removeLayer(expandedTileLayer);
-      if (type === 'googleHybrid') {
-        expandedTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
-        }).addTo(expandedMap);
-        document.getElementById('expBtnHybrid').className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white';
-        document.getElementById('expBtnStreets').className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 border border-slate-700';
-      } else {
-        expandedTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
-        }).addTo(expandedMap);
-        document.getElementById('expBtnStreets').className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white';
-        document.getElementById('expBtnHybrid').className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 border border-slate-700';
-      }
-    }
-
-    // =========================================================================
-    // 7. ENTERPRISE ADMIN COMMAND CENTER ENGINE
-    // =========================================================================
-    let currentAppView = 'agent'; // 'agent' | 'admin'
-    let adminFleetMap = null;
-    let adminFleetTileLayer = null;
-    let adminFleetLayers = [];
-
-    const adminFleetUnits = [
-      {
-        id: "unit-01",
-        name: "Dinesh Kumar Singh (You)",
-        email: "dinesh.singh@dhanpurna.net",
-        photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-        battery: 50,
-        isCharging: false,
-        status: "Moving",
-        speedKmh: 5.6,
-        distanceKm: 8.4,
-        duration: "04:30:00",
-        lastLocation: "Active Road Transit (Riverfront)",
-        lat: 26.1885,
-        lng: 91.7440,
-        breadcrumbs: [
-          { lat: 26.1852, lng: 91.7380 },
-          { lat: 26.1865, lng: 91.7405 },
-          { lat: 26.1880, lng: 91.7428 },
-          { lat: 26.1885, lng: 91.7440 }
-        ]
-      },
-      {
-        id: "unit-02",
-        name: "Rakesh Barua",
-        email: "rakesh.barua@pwdassam.gov.in",
-        photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-        battery: 88,
-        isCharging: true,
-        status: "Moving",
-        speedKmh: 6.2,
-        distanceKm: 14.2,
-        duration: "05:10:00",
-        lastLocation: "Bridge Pier Foundation P-4 (~3km Milestone)",
-        lat: 26.1920,
-        lng: 91.7180,
-        breadcrumbs: [
-          { lat: 26.1880, lng: 91.7120 },
-          { lat: 26.1900, lng: 91.7150 },
-          { lat: 26.1920, lng: 91.7180 }
-        ]
-      },
-      {
-        id: "unit-03",
-        name: "Amit Bora",
-        email: "amit.bora@pwdassam.gov.in",
-        photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-        battery: 32,
-        isCharging: false,
-        status: "Stationary",
-        speedKmh: 0.0,
-        distanceKm: 9.8,
-        duration: "03:45:00",
-        lastLocation: "Material Testing Lab (Idle on Site)",
-        lat: 26.1820,
-        lng: 91.7510,
-        breadcrumbs: [
-          { lat: 26.1790, lng: 91.7450 },
-          { lat: 26.1820, lng: 91.7510 }
-        ]
-      },
-      {
-        id: "unit-04",
-        name: "Rahul Das",
-        email: "rahul.das@pwdassam.gov.in",
-        photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-        battery: 18,
-        isCharging: false,
-        status: "Moving",
-        speedKmh: 4.8,
-        distanceKm: 11.6,
-        duration: "04:15:00",
-        lastLocation: "Fancy Bazar Market Trenching (~3km)",
-        lat: 26.1840,
-        lng: 91.7350,
-        breadcrumbs: [
-          { lat: 26.1800, lng: 91.7280 },
-          { lat: 26.1840, lng: 91.7350 }
-        ]
-      }
-    ];
-
-    // --- Admin Authentication Security ---
-    const ADMIN_DEFAULT_PASSWORD = "admin123";
-    let isAdminAuthenticated = false;
-
-    function openAdminAuthModal() {
-      const modal = document.getElementById('adminAuthModal');
-      const input = document.getElementById('adminPasswordInput');
-      const err = document.getElementById('adminAuthError');
-      if (err) err.classList.add('hidden');
-      if (input) input.value = '';
-      if (modal) modal.classList.remove('hidden');
-      setTimeout(() => input && input.focus(), 150);
-    }
-
-    function closeAdminAuthModal() {
-      const modal = document.getElementById('adminAuthModal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function submitAdminPassword() {
-      const input = document.getElementById('adminPasswordInput');
-      const err = document.getElementById('adminAuthError');
-      const entered = (input ? input.value : '').trim();
-
-      if (entered === ADMIN_DEFAULT_PASSWORD || entered === 'innbuilt2026') {
-        isAdminAuthenticated = true;
-        sessionStorage.setItem('fieldpulse_admin_auth', 'true');
-        closeAdminAuthModal();
-        activateAdminView();
-      } else {
-        if (err) err.classList.remove('hidden');
-      }
-    }
-
-    function switchAppView(view) {
-      if (view === 'admin') {
-        activateAdminView();
-      } else {
-        activateAgentView();
-      }
-    }
-
-    function activateAdminView() {
-      currentAppView = 'admin';
-      const agentContainer = document.getElementById('agentViewContainer');
-      const adminContainer = document.getElementById('adminViewContainer');
-      const btnAgent = document.getElementById('navBtnAgent');
-      const btnAdmin = document.getElementById('navBtnAdmin');
-
-      agentContainer.classList.add('hidden');
-      adminContainer.classList.remove('hidden');
-      btnAdmin.className = 'px-2.5 py-1 rounded-lg bg-blue-600 text-white flex items-center space-x-1 transition shadow';
-      btnAgent.className = 'px-2.5 py-1 rounded-lg text-slate-300 hover:text-white flex items-center space-x-1 transition';
-      
-      setTimeout(() => {
-        initAdminFleetMap();
-        renderAdminRoster(adminFleetUnits);
-      }, 100);
-      lucide.createIcons();
-    }
-
-    function activateAgentView() {
-      currentAppView = 'agent';
-      const agentContainer = document.getElementById('agentViewContainer');
-      const adminContainer = document.getElementById('adminViewContainer');
-      const btnAgent = document.getElementById('navBtnAgent');
-      const btnAdmin = document.getElementById('navBtnAdmin');
-
-      adminContainer.classList.add('hidden');
-      agentContainer.classList.remove('hidden');
-      btnAgent.className = 'px-2.5 py-1 rounded-lg bg-blue-600 text-white flex items-center space-x-1 transition shadow';
-      btnAdmin.className = 'px-2.5 py-1 rounded-lg text-slate-300 hover:text-white flex items-center space-x-1 transition';
-
-      setTimeout(() => {
-        if (agentMiniMap) agentMiniMap.invalidateSize();
-      }, 100);
-      lucide.createIcons();
-    }
-
-    function initAdminFleetMap() {
-      if (!adminFleetMap) {
-        adminFleetMap = L.map('adminFleetMap', { zoomControl: true }).setView([26.1875, 91.7380], 14);
-        adminFleetTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
-        }).addTo(adminFleetMap);
-      }
-
-      adminFleetMap.invalidateSize();
-      renderAdminFleetMarkers();
-    }
-
-    function setAdminFleetTile(type) {
-      if (!adminFleetMap) return;
-      if (adminFleetTileLayer) adminFleetMap.removeLayer(adminFleetTileLayer);
-      if (type === 'googleHybrid') {
-        adminFleetTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
-        }).addTo(adminFleetMap);
-        document.getElementById('adminTileHybrid').className = 'px-2 py-0.5 rounded bg-blue-600 text-white font-bold';
-        document.getElementById('adminTileStreets').className = 'px-2 py-0.5 rounded text-slate-400 hover:text-white font-bold';
-      } else {
-        adminFleetTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
-        }).addTo(adminFleetMap);
-        document.getElementById('adminTileStreets').className = 'px-2 py-0.5 rounded bg-blue-600 text-white font-bold';
-        document.getElementById('adminTileHybrid').className = 'px-2 py-0.5 rounded text-slate-400 hover:text-white font-bold';
-      }
-    }
-
-    function renderAdminFleetMarkers() {
-      if (!adminFleetMap) return;
-      adminFleetLayers.forEach(l => adminFleetMap.removeLayer(l));
-      adminFleetLayers.length = 0;
-
-      // Sync active unit with live user state if available
-      adminFleetUnits[0].name = `${state.profile.name} (Live GPS)`;
-      adminFleetUnits[0].photoUrl = state.profile.photoUrl;
-      adminFleetUnits[0].battery = parseInt(localStorage.getItem('fieldpulse_real_battery') || '50', 10);
-      if (state.lastLat && state.lastLng) {
-        adminFleetUnits[0].lat = state.lastLat;
-        adminFleetUnits[0].lng = state.lastLng;
-      }
-
-      adminFleetUnits.forEach(unit => {
-        // Draw agent road polyline
-        if (unit.breadcrumbs && unit.breadcrumbs.length > 1) {
-          const line = L.polyline(unit.breadcrumbs.map(b => [b.lat, b.lng]), {
-            color: '#10b981',
-            weight: 4.5,
-            opacity: 0.85
-          }).addTo(adminFleetMap);
-          adminFleetLayers.push(line);
-        }
-
-        // Draw agent circular photo pin
-        const agentIcon = L.divIcon({
-          className: 'admin-agent-pin',
-          html: `
-            <div class="agent-circle-pin">
-              <div class="radar-pulse-ring"></div>
-              <img src="${unit.photoUrl}" alt="${unit.name}">
-            </div>
-          `,
-          iconSize: [44, 44],
-          iconAnchor: [22, 22]
-        });
-
-        const marker = L.marker([unit.lat, unit.lng], { icon: agentIcon }).addTo(adminFleetMap);
-        marker.bindPopup(`
-          <div class="p-1 space-y-1">
-            <strong class="text-slate-900">${unit.name}</strong>
-            <p class="text-xs text-slate-600">${unit.email}</p>
-            <div class="text-xs font-bold text-emerald-600">⚡ Battery: ${unit.battery}% ${unit.isCharging ? '(Charging)' : ''}</div>
-            <div class="text-xs text-blue-700">📍 ${unit.lastLocation}</div>
-            <div class="text-xs text-slate-500">Speed: ${unit.speedKmh} km/h · Distance: ${unit.distanceKm} km</div>
-          </div>
-        `);
-        adminFleetLayers.push(marker);
-      });
-    }
-
-    function renderAdminRoster(units) {
-      const rosterListEl = document.getElementById('adminRosterList');
-      if (!rosterListEl) return;
-
-      document.getElementById('rosterCountBadge').innerText = `${units.length} Units Online`;
-
-      rosterListEl.innerHTML = units.map(unit => {
-        const batteryColor = unit.battery > 50 ? 'text-emerald-400 border-emerald-500/30' : (unit.battery >= 20 ? 'text-amber-400 border-amber-500/30' : 'text-rose-500 border-rose-500/40 animate-pulse');
-        const movementBadge = unit.status === 'Moving' 
-          ? `<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">🟢 Moving (${unit.speedKmh} km/h)</span>`
-          : `<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">🟡 Stationary</span>`;
-
-        return `
-          <div class="bg-slate-950/80 hover:bg-slate-800/90 border border-slate-800 rounded-2xl p-3 space-y-2 transition shadow cursor-pointer" onclick="focusAgentOnMasterMap('${unit.id}')">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2.5">
-                <img src="${unit.photoUrl}" class="w-9 h-9 rounded-full object-cover border-2 border-emerald-500">
-                <div>
-                  <h4 class="text-xs font-extrabold text-white">${unit.name}</h4>
-                  <p class="text-[10px] text-slate-400">${unit.email}</p>
-                </div>
-              </div>
-              <div class="px-2 py-1 rounded-lg bg-slate-900 border ${batteryColor} text-xs font-black">
-                ⚡ ${unit.battery}%
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
-              ${movementBadge}
-              <span class="text-slate-300 font-mono font-bold">${unit.distanceKm} km · ${unit.duration}</span>
-            </div>
-
-            <div class="text-[11px] text-blue-300 font-medium truncate">
-              📍 ${unit.lastLocation}
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function focusAgentOnMasterMap(unitId) {
-      const unit = adminFleetUnits.find(u => u.id === unitId);
-      if (!unit || !adminFleetMap) return;
-      adminFleetMap.setView([unit.lat, unit.lng], 16, { animate: true });
-    }
-
-    function filterAdminRoster(query) {
-      const q = query.toLowerCase();
-      const filtered = adminFleetUnits.filter(u => 
-        u.name.toLowerCase().includes(q) || 
-        u.email.toLowerCase().includes(q) || 
-        u.lastLocation.toLowerCase().includes(q)
-      );
-      renderAdminRoster(filtered);
-    }
-
-    function refreshAdminFleet() {
-      renderAdminFleetMarkers();
-      renderAdminRoster(adminFleetUnits);
-      alert("✓ Master Fleet Telematics & GPS positions refreshed.");
-    }
-
-    function exportMasterFleetReport() {
-      const blob = new Blob([JSON.stringify(adminFleetUnits, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Master_Fleet_Telematics_Report_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
     }
   </script>
 </body>
